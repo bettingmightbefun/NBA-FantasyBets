@@ -7,15 +7,39 @@ exports.getUpcomingGames = async (req, res) => {
   try {
     console.log('Getting upcoming games...');
     
-    // First try: Get any scheduled games regardless of date
-    const allGames = await Game.find({
-      status: 'scheduled'
+    // Get current date/time
+    const now = new Date();
+    
+    // Calculate date 48 hours from now
+    const futureDate = new Date();
+    futureDate.setHours(futureDate.getHours() + 48);
+    
+    // Find games that are scheduled and within the next 48 hours
+    const upcomingGames = await Game.find({
+      status: 'scheduled',
+      startTime: { 
+        $gte: now,  // Greater than or equal to current time
+        $lte: futureDate // Less than or equal to 48 hours from now
+      }
     }).sort({ startTime: 1 });
     
-    console.log(`Found ${allGames.length} total scheduled games`);
+    console.log(`Found ${upcomingGames.length} upcoming games in the next 48 hours`);
     
-    if (allGames.length > 0) {
-      return res.json(allGames);
+    // If no upcoming games found, try to find any scheduled games
+    if (upcomingGames.length === 0) {
+      console.log('No upcoming games found in the next 48 hours, checking for any scheduled games');
+      
+      const anyScheduledGames = await Game.find({
+        status: 'scheduled'
+      }).sort({ startTime: 1 });
+      
+      console.log(`Found ${anyScheduledGames.length} scheduled games`);
+      
+      if (anyScheduledGames.length > 0) {
+        return res.json(anyScheduledGames);
+      }
+    } else {
+      return res.json(upcomingGames);
     }
     
     // If no games found, return empty array
