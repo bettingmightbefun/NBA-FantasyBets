@@ -40,40 +40,36 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   // Register user
-  const register = useCallback(async (userData) => {
+  const register = async (userData) => {
     try {
-      setLoading(true);
-      setError(null);
+      console.log('Register attempt with username:', userData.username);
       
-      const res = await authAPI.register(userData);
-      
-      // Save token to local storage
-      localStorage.setItem('token', res.data.token);
-      
-      setUser(res.data);
-      setIsAuthenticated(true);
-      return res.data;
-    } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed');
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Login user
-  const login = useCallback(async (userData) => {
-    try {
-      console.log('Login attempt with:', { 
-        username: userData.username, 
-        email: userData.email,
-        passwordProvided: !!userData.password 
+      const response = await api.post('/auth/register', {
+        username: userData.username
       });
       
+      console.log('Register response:', response.data);
+      
+      if (response.data.token) {
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        setUser(response.data.user);
+        setIsAuthenticated(true);
+        return response.data;
+      }
+    } catch (error) {
+      console.error('Register error:', error);
+      throw error;
+    }
+  };
+
+  // Login user
+  const login = async (userData) => {
+    try {
+      console.log('Login attempt with username:', userData.username);
+      
       const response = await api.post('/auth/login', {
-        username: userData.username,
-        email: userData.email,
-        password: userData.password
+        username: userData.username
       });
       
       console.log('Login response:', response.data);
@@ -89,7 +85,7 @@ export const AuthProvider = ({ children }) => {
       console.error('Login error:', error);
       throw error;
     }
-  }, []);
+  };
 
   // Logout user
   const logout = useCallback(() => {

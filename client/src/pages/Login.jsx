@@ -11,24 +11,17 @@ import {
   Paper,
   Alert,
   CircularProgress,
-  FormHelperText,
-  InputAdornment,
-  IconButton
+  FormHelperText
 } from '@mui/material';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
 const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
   
   const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    password: ''
+    username: ''
   });
   
-  const [showPassword, setShowPassword] = useState(false);
   const [formErrors, setFormErrors] = useState({});
   const [loginError, setLoginError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -49,22 +42,11 @@ const Login = () => {
     }
   };
   
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
-  
   const validateForm = () => {
     const errors = {};
     
-    // Either username or email is required
-    if (!formData.username.trim() && !formData.email.trim()) {
-      errors.username = 'Either username or email is required';
-      errors.email = 'Either username or email is required';
-    }
-    
-    // Email validation if provided
-    if (formData.email.trim() && !/\S+@\S+\.\S+/.test(formData.email)) {
-      errors.email = 'Email is invalid';
+    if (!formData.username.trim()) {
+      errors.username = 'Username is required';
     }
     
     setFormErrors(errors);
@@ -86,7 +68,7 @@ const Login = () => {
       navigate('/dashboard');
     } catch (error) {
       setLoginError(
-        error.response?.data?.message || 'Login failed. Please check your credentials.'
+        error.response?.data?.message || 'Login failed. Please check your username.'
       );
     } finally {
       setIsSubmitting(false);
@@ -109,7 +91,7 @@ const Login = () => {
           
           <Box component="form" onSubmit={handleSubmit} noValidate>
             <FormHelperText sx={{ mb: 2, textAlign: 'center' }}>
-              Enter your username or email to sign in
+              Enter your username to sign in
             </FormHelperText>
             
             <TextField
@@ -126,50 +108,6 @@ const Login = () => {
               helperText={formErrors.username}
             />
             
-            <Typography variant="body2" align="center" sx={{ my: 1 }}>
-              OR
-            </Typography>
-            
-            <TextField
-              margin="normal"
-              fullWidth
-              id="email"
-              label="Email Address"
-              name="email"
-              autoComplete="email"
-              value={formData.email}
-              onChange={handleChange}
-              error={!!formErrors.email}
-              helperText={formErrors.email}
-            />
-            
-            <TextField
-              margin="normal"
-              fullWidth
-              name="password"
-              label="Password"
-              type={showPassword ? 'text' : 'password'}
-              id="password"
-              autoComplete="current-password"
-              value={formData.password}
-              onChange={handleChange}
-              error={!!formErrors.password}
-              helperText={formErrors.password}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      aria-label="toggle password visibility"
-                      onClick={togglePasswordVisibility}
-                      edge="end"
-                    >
-                      {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-            />
-            
             <Button
               type="submit"
               fullWidth
@@ -181,14 +119,7 @@ const Login = () => {
               {isSubmitting ? <CircularProgress size={24} /> : 'Sign In'}
             </Button>
             
-            <Grid container>
-              <Grid item xs>
-                <Link to="/forgot-password" style={{ textDecoration: 'none' }}>
-                  <Typography variant="body2" color="primary">
-                    Forgot password?
-                  </Typography>
-                </Link>
-              </Grid>
+            <Grid container justifyContent="flex-end">
               <Grid item>
                 <Link to="/register" style={{ textDecoration: 'none' }}>
                   <Typography variant="body2" color="primary">

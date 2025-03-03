@@ -13,36 +13,35 @@ const generateToken = (id) => {
 // @access  Public
 exports.register = async (req, res) => {
   try {
-    const { username, email } = req.body;
+    const { username } = req.body;
 
     // Check if user already exists
-    const userExists = await User.findOne({ $or: [{ email }, { username }] });
+    const userExists = await User.findOne({ username });
 
     if (userExists) {
-      return res.status(400).json({ message: 'User already exists' });
+      return res.status(400).json({ message: 'Username already taken' });
     }
 
-    // Create new user without password
+    // Create user
     const user = await User.create({
-      username,
-      email
+      username
     });
 
     if (user) {
+      // Generate token
+      const token = generateToken(user._id);
+
       res.status(201).json({
         _id: user._id,
         username: user.username,
-        email: user.email,
-        balance: user.balance,
-        isAdmin: user.isAdmin,
-        token: generateToken(user._id)
+        token
       });
     } else {
       res.status(400).json({ message: 'Invalid user data' });
     }
   } catch (error) {
-    console.error('Register error:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Registration error:', error);
+    res.status(500).json({ message: 'Server error during registration' });
   }
 };
 
@@ -51,57 +50,33 @@ exports.register = async (req, res) => {
 // @access  Public
 exports.login = async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const { username } = req.body;
     
-    console.log('Login attempt:', { username, email, hasPassword: !!password });
+    console.log('Login attempt with username:', username);
 
-    // Find user by username OR email (case-insensitive)
-    const user = await User.findOne({
-      $or: [
-        { username: { $regex: new RegExp(`^${username}$`, 'i') } },
-        { email: { $regex: new RegExp(`^${email}$`, 'i') } }
-      ]
+    // Find user by username (case insensitive)
+    const user = await User.findOne({ 
+      username: { $regex: new RegExp(`^${username}$`, 'i') }
     });
-    
-    console.log('User found:', user ? 'Yes' : 'No');
-    if (user) {
-      console.log('User details:', {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        hasPassword: !!user.password
-      });
-    }
 
-    // Check if user exists
     if (user) {
-      // If the user has a password and a password was provided, validate it
-      if (user.password && password) {
-        const isMatch = await user.comparePassword(password);
-        if (!isMatch) {
-          console.log('Authentication failed: Invalid password');
-          return res.status(401).json({ message: 'Invalid credentials' });
-        }
-      } else {
-        // For backward compatibility, allow login without password
-        console.log('Authentication successful: No password check required');
-      }
+      // Generate token
+      const token = generateToken(user._id);
       
+      console.log('User found, generating token');
+
       res.json({
         _id: user._id,
         username: user.username,
-        email: user.email,
-        balance: user.balance,
-        isAdmin: user.isAdmin,
-        token: generateToken(user._id)
+        token
       });
     } else {
-      console.log('Authentication failed: User not found');
-      res.status(401).json({ message: 'Invalid username or email' });
+      console.log('User not found');
+      res.status(401).json({ message: 'Invalid username' });
     }
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error during login' });
   }
 };
 
@@ -110,26 +85,18 @@ exports.login = async (req, res) => {
 // @access  Private
 exports.getProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id);
-
+    const user = await User.findById(req.user.id).select('-password');
+    
     if (user) {
       res.json({
         _id: user._id,
-        username: user.username,
-        email: user.email,
-        balance: user.balance,
-        betsPlaced: user.betsPlaced,
-        betsWon: user.betsWon,
-        betsLost: user.betsLost,
-        totalWagered: user.totalWagered,
-        totalWon: user.totalWon,
-        isAdmin: user.isAdmin
+        username: user.username
       });
     } else {
       res.status(404).json({ message: 'User not found' });
     }
   } catch (error) {
     console.error('Get profile error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error while getting profile' });
   }
 }; 

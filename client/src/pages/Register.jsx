@@ -18,8 +18,7 @@ const Register = () => {
   const { register } = useAuth();
   
   const [formData, setFormData] = useState({
-    username: '',
-    email: ''
+    username: ''
   });
   
   const [formErrors, setFormErrors] = useState({});
@@ -52,13 +51,6 @@ const Register = () => {
       errors.username = 'Username must be at least 3 characters';
     } else if (formData.username.length > 20) {
       errors.username = 'Username must be less than 20 characters';
-    }
-    
-    // Email validation
-    if (!formData.email.trim()) {
-      errors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      errors.email = 'Email is invalid';
     }
     
     setFormErrors(errors);
@@ -115,20 +107,6 @@ const Register = () => {
               onChange={handleChange}
               error={!!formErrors.username}
               helperText={formErrors.username}
-            />
-            
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              id="email"
-              label="Email Address"
-              name="email"
-              autoComplete="email"
-              value={formData.email}
-              onChange={handleChange}
-              error={!!formErrors.email}
-              helperText={formErrors.email}
             />
             
             <Button
