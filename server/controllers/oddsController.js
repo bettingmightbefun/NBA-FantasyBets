@@ -9,10 +9,12 @@ exports.getUpcomingGames = async (req, res) => {
     
     // Get current date/time
     const now = new Date();
+    console.log(`Current date/time: ${now.toLocaleString()}`);
     
     // Calculate date 48 hours from now
     const futureDate = new Date();
     futureDate.setHours(futureDate.getHours() + 48);
+    console.log(`Future date/time (48 hours from now): ${futureDate.toLocaleString()}`);
     
     // Find games that are scheduled and within the next 48 hours
     const upcomingGames = await Game.find({
@@ -25,6 +27,14 @@ exports.getUpcomingGames = async (req, res) => {
     
     console.log(`Found ${upcomingGames.length} upcoming games in the next 48 hours`);
     
+    // Log the games found
+    if (upcomingGames.length > 0) {
+      console.log('Upcoming games:');
+      upcomingGames.forEach(game => {
+        console.log(`- ${game.homeTeam} vs ${game.awayTeam}, ${new Date(game.startTime).toLocaleString()}`);
+      });
+    }
+    
     // If no upcoming games found, try to find any scheduled games
     if (upcomingGames.length === 0) {
       console.log('No upcoming games found in the next 48 hours, checking for any scheduled games');
@@ -35,7 +45,13 @@ exports.getUpcomingGames = async (req, res) => {
       
       console.log(`Found ${anyScheduledGames.length} scheduled games`);
       
+      // Log the scheduled games found
       if (anyScheduledGames.length > 0) {
+        console.log('Scheduled games:');
+        anyScheduledGames.forEach(game => {
+          console.log(`- ${game.homeTeam} vs ${game.awayTeam}, ${new Date(game.startTime).toLocaleString()}`);
+        });
+        
         return res.json(anyScheduledGames);
       }
     } else {
