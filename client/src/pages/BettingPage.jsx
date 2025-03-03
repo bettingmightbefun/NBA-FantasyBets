@@ -21,6 +21,7 @@ import {
   TableHead,
   TableRow,
   styled,
+  useTheme,
 } from '@mui/material';
 import { Search as SearchIcon, Refresh as RefreshIcon, ArrowForwardIos as ArrowIcon } from '@mui/icons-material';
 import { oddsAPI } from '../services/api';
@@ -28,48 +29,108 @@ import { formatDate, formatTime, formatOdds } from '../utils/formatters';
 
 // Styled components for the modern design
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
-  padding: '16px 8px',
-  borderBottom: `1px solid ${theme.palette.divider}`,
+  padding: '12px 8px',
+  borderBottom: '1px solid rgba(81, 81, 81, 0.5)',
+  color: theme.palette.common.white,
   '&.header': {
-    backgroundColor: theme.palette.mode === 'dark' ? '#1A1A1A' : theme.palette.grey[100],
-    color: theme.palette.text.secondary,
+    backgroundColor: '#121212',
+    color: '#999',
     fontSize: '0.75rem',
     fontWeight: 'bold',
     textTransform: 'uppercase',
+    padding: '8px',
   },
 }));
 
-const StyledTableRow = styled(TableRow)(({ theme }) => ({
+const StyledTableRow = styled(TableRow)(() => ({
   '&:hover': {
-    backgroundColor: theme.palette.mode === 'dark' ? '#2A2A2A' : theme.palette.grey[50],
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     cursor: 'pointer',
   },
+  '&.divider': {
+    borderBottom: '8px solid #121212',
+  },
+  textDecoration: 'none',
 }));
 
-const OddsButton = styled(Button)(({ theme }) => ({
+const OddsValue = styled(Box)(({ theme }) => ({
+  textAlign: 'center',
+  padding: '8px 0',
+  borderRadius: 0,
   width: '100%',
-  justifyContent: 'center',
-  borderRadius: 4,
-  padding: '8px',
-  backgroundColor: theme.palette.mode === 'dark' ? '#2A2A2A' : theme.palette.grey[100],
-  color: theme.palette.text.primary,
   '&:hover': {
-    backgroundColor: theme.palette.mode === 'dark' ? '#3A3A3A' : theme.palette.grey[200],
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
 }));
 
-const TeamLogo = styled('div')(({ theme }) => ({
-  width: 30,
-  height: 30,
+const TeamLogo = styled(Box)(({ bgcolor }) => ({
+  width: 32,
+  height: 32,
   borderRadius: '50%',
-  backgroundColor: theme.palette.primary.main,
+  backgroundColor: bgcolor || '#1976d2',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  marginRight: theme.spacing(1),
+  marginRight: 12,
+  color: 'white',
+  fontWeight: 'bold',
+  fontSize: '0.75rem',
 }));
 
+const DateHeader = styled(Typography)(({ theme }) => ({
+  padding: '12px 16px',
+  backgroundColor: '#000',
+  color: theme.palette.common.white,
+  fontWeight: 'bold',
+}));
+
+const MoreWagersLink = styled(Button)(() => ({
+  color: '#4dabf5',
+  textTransform: 'none',
+  justifyContent: 'flex-end',
+  padding: '4px 16px',
+  '&:hover': {
+    backgroundColor: 'transparent',
+    textDecoration: 'underline',
+  },
+}));
+
+// Team color mapping
+const teamColors = {
+  'Portland Trail Blazers': '#E03A3E',
+  'Philadelphia 76ers': '#006BB6',
+  'Golden State Warriors': '#1D428A',
+  'Charlotte Hornets': '#1D1160',
+  'Washington Wizards': '#002B5C',
+  'Miami Heat': '#98002E',
+  'Atlanta Hawks': '#E03A3E',
+  'Memphis Grizzlies': '#5D76A9',
+  'Houston Rockets': '#CE1141',
+  'Oklahoma City Thunder': '#007AC1',
+  'Sacramento Kings': '#5A2D81',
+  'Dallas Mavericks': '#00538C',
+  'Detroit Pistons': '#C8102E',
+  'Utah Jazz': '#002B5C',
+  'Toronto Raptors': '#CE1141',
+  'Orlando Magic': '#0077C0',
+  'Milwaukee Bucks': '#00471B',
+  'New York Knicks': '#F58426',
+  'Cleveland Cavaliers': '#860038',
+  'Chicago Bulls': '#CE1141',
+  'Los Angeles Lakers': '#552583',
+  'Boston Celtics': '#007A33',
+  'Brooklyn Nets': '#000000',
+  'Denver Nuggets': '#0E2240',
+  'Indiana Pacers': '#002D62',
+  'Los Angeles Clippers': '#C8102E',
+  'Minnesota Timberwolves': '#0C2340',
+  'New Orleans Pelicans': '#0C2340',
+  'Phoenix Suns': '#1D1160',
+  'San Antonio Spurs': '#C4CED4',
+};
+
 const BettingPage = () => {
+  const theme = useTheme();
   const [games, setGames] = useState([]);
   const [filteredGames, setFilteredGames] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -179,7 +240,21 @@ const BettingPage = () => {
   const getTeamAbbreviation = (teamName) => {
     const words = teamName.split(' ');
     if (words.length === 1) return teamName.substring(0, 3).toUpperCase();
+    
+    // For teams with multiple words, use the last word or a custom abbreviation
+    if (teamName.includes('Trail Blazers')) return 'BLA';
+    if (teamName.includes('76ers')) return '76E';
+    if (teamName.includes('Warriors')) return 'WAR';
+    if (teamName.includes('Hornets')) return 'HOR';
+    if (teamName.includes('Wizards')) return 'WIZ';
+    if (teamName.includes('Heat')) return 'HEA';
+    
     return words[words.length - 1].substring(0, 3).toUpperCase();
+  };
+
+  // Get team color
+  const getTeamColor = (teamName) => {
+    return teamColors[teamName] || theme.palette.primary.main;
   };
 
   // Format time for display
@@ -201,241 +276,260 @@ const BettingPage = () => {
   }
 
   return (
-    <Box>
-      <Typography variant="h4" gutterBottom>
-        NBA Odds
-      </Typography>
+    <Box sx={{ bgcolor: '#121212', color: 'white', minHeight: '100vh' }}>
+      <Box sx={{ p: 2 }}>
+        <Typography variant="h5" gutterBottom>
+          NBA Odds
+        </Typography>
 
-      {/* Search and Filter */}
-      <Paper sx={{ p: 2, mb: 3 }}>
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={6}>
-            <TextField
-              fullWidth
-              placeholder="Search teams..."
-              value={searchTerm}
-              onChange={handleSearchChange}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon />
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Grid>
-          <Grid item xs={12} md={6}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
-              <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
-                Last updated:
-              </Typography>
-              <Typography variant="body2" fontWeight="medium">
-                {new Date().toLocaleTimeString()}
-              </Typography>
-              <Chip
-                label="Live Odds"
-                color="primary"
-                size="small"
-                sx={{ ml: 2 }}
+        {/* Search and Filter */}
+        <Box sx={{ mb: 3 }}>
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                placeholder="Search teams..."
+                value={searchTerm}
+                onChange={handleSearchChange}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    color: 'white',
+                    '& fieldset': {
+                      borderColor: 'rgba(255, 255, 255, 0.23)',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: 'rgba(255, 255, 255, 0.5)',
+                    },
+                  },
+                  '& .MuiInputAdornment-root': {
+                    color: 'rgba(255, 255, 255, 0.7)',
+                  },
+                }}
               />
-              <Button 
-                startIcon={<RefreshIcon />} 
-                onClick={handleRefresh} 
-                sx={{ ml: 2 }}
-                variant="outlined"
-                size="small"
-              >
-                Refresh
-              </Button>
-            </Box>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
+                <Typography variant="body2" color="rgba(255, 255, 255, 0.7)" sx={{ mr: 1 }}>
+                  Last updated:
+                </Typography>
+                <Typography variant="body2" fontWeight="medium" color="white">
+                  {new Date().toLocaleTimeString()}
+                </Typography>
+                <Chip
+                  label="Live Odds"
+                  color="primary"
+                  size="small"
+                  sx={{ ml: 2 }}
+                />
+                <Button 
+                  startIcon={<RefreshIcon />} 
+                  onClick={handleRefresh} 
+                  sx={{ ml: 2, color: 'white', borderColor: 'rgba(255, 255, 255, 0.5)' }}
+                  variant="outlined"
+                  size="small"
+                >
+                  Refresh
+                </Button>
+              </Box>
+            </Grid>
           </Grid>
-        </Grid>
-      </Paper>
-
-      {error && (
-        <Alert 
-          severity="info" 
-          sx={{ mb: 3 }}
-          action={
-            <Button color="inherit" size="small" onClick={handleRefresh}>
-              REFRESH
-            </Button>
-          }
-        >
-          {error}
-        </Alert>
-      )}
-
-      {/* Tabs for leagues */}
-      <Paper sx={{ mb: 3 }}>
-        <Tabs
-          value={tabValue}
-          onChange={handleTabChange}
-          indicatorColor="primary"
-          textColor="primary"
-          variant="fullWidth"
-        >
-          <Tab label="NBA" />
-          <Tab label="MLB" disabled />
-          <Tab label="NFL" disabled />
-          <Tab label="NHL" disabled />
-        </Tabs>
-      </Paper>
-
-      {filteredGames.length === 0 ? (
-        <Box sx={{ textAlign: 'center', py: 5 }}>
-          <Typography variant="h6" color="text.secondary" gutterBottom>
-            No games found matching your search criteria.
-          </Typography>
-          <Button 
-            variant="contained" 
-            startIcon={<RefreshIcon />}
-            onClick={handleRefresh}
-            sx={{ mt: 2 }}
-          >
-            Refresh Games
-          </Button>
         </Box>
-      ) : (
-        dates.map((date) => (
-          <Box key={date} sx={{ mb: 4 }}>
-            <Typography variant="h6" gutterBottom>
-              {date}
+
+        {error && (
+          <Alert 
+            severity="info" 
+            sx={{ mb: 3 }}
+            action={
+              <Button color="inherit" size="small" onClick={handleRefresh}>
+                REFRESH
+              </Button>
+            }
+          >
+            {error}
+          </Alert>
+        )}
+
+        {/* Tabs for leagues */}
+        <Paper sx={{ mb: 3, bgcolor: '#1E1E1E' }}>
+          <Tabs
+            value={tabValue}
+            onChange={handleTabChange}
+            indicatorColor="primary"
+            textColor="primary"
+            variant="fullWidth"
+            sx={{
+              '& .MuiTab-root': {
+                color: 'rgba(255, 255, 255, 0.7)',
+                '&.Mui-selected': {
+                  color: 'white',
+                },
+              },
+            }}
+          >
+            <Tab label="NBA" />
+            <Tab label="MLB" disabled />
+            <Tab label="NFL" disabled />
+            <Tab label="NHL" disabled />
+          </Tabs>
+        </Paper>
+
+        {filteredGames.length === 0 ? (
+          <Box sx={{ textAlign: 'center', py: 5, color: 'white' }}>
+            <Typography variant="h6" color="rgba(255, 255, 255, 0.7)" gutterBottom>
+              No games found matching your search criteria.
             </Typography>
-            
-            <TableContainer component={Paper} sx={{ mb: 3, backgroundColor: 'background.paper' }}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <StyledTableCell className="header" width="40%">TEAMS</StyledTableCell>
-                    <StyledTableCell className="header" align="center" width="20%">SPREAD</StyledTableCell>
-                    <StyledTableCell className="header" align="center" width="20%">MONEY</StyledTableCell>
-                    <StyledTableCell className="header" align="center" width="20%">TOTAL</StyledTableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {groupedGames[date].map((game) => (
-                    <React.Fragment key={game._id}>
-                      {/* Away Team Row */}
-                      <StyledTableRow 
-                        component={RouterLink} 
-                        to={`/games/${game._id}`}
-                        sx={{ textDecoration: 'none' }}
-                      >
-                        <StyledTableCell>
-                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <TeamLogo>{getTeamAbbreviation(game.awayTeam)}</TeamLogo>
-                            <Box>
-                              <Typography variant="body1">{game.awayTeam}</Typography>
-                              <Typography variant="caption" color="text.secondary">@</Typography>
+            <Button 
+              variant="contained" 
+              startIcon={<RefreshIcon />}
+              onClick={handleRefresh}
+              sx={{ mt: 2 }}
+            >
+              Refresh Games
+            </Button>
+          </Box>
+        ) : (
+          dates.map((date) => (
+            <Box key={date} sx={{ mb: 4 }}>
+              <DateHeader variant="subtitle1">
+                {date}
+              </DateHeader>
+              
+              <TableContainer sx={{ bgcolor: '#1E1E1E' }}>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <StyledTableCell className="header" width="40%">TEAMS</StyledTableCell>
+                      <StyledTableCell className="header" align="center" width="20%">SPREAD</StyledTableCell>
+                      <StyledTableCell className="header" align="center" width="20%">MONEY</StyledTableCell>
+                      <StyledTableCell className="header" align="center" width="20%">TOTAL</StyledTableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {groupedGames[date].map((game, index) => (
+                      <React.Fragment key={game._id}>
+                        {/* Away Team Row */}
+                        <StyledTableRow 
+                          component={RouterLink} 
+                          to={`/games/${game._id}`}
+                          sx={{ textDecoration: 'none' }}
+                        >
+                          <StyledTableCell>
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                              <TeamLogo bgcolor={getTeamColor(game.awayTeam)}>
+                                {getTeamAbbreviation(game.awayTeam)}
+                              </TeamLogo>
+                              <Box>
+                                <Typography variant="body2" color="white">{game.awayTeam}</Typography>
+                                <Typography variant="caption" color="rgba(255, 255, 255, 0.5)">@</Typography>
+                              </Box>
                             </Box>
-                          </Box>
-                        </StyledTableCell>
-                        <StyledTableCell align="center">
-                          <OddsButton>
-                            <Box>
-                              <Typography variant="body2">
+                          </StyledTableCell>
+                          <StyledTableCell align="center">
+                            <OddsValue>
+                              <Typography variant="body2" color="white">
                                 {game.odds?.spread?.away > 0 ? '+' : ''}{game.odds?.spread?.away}
                               </Typography>
-                              <Typography variant="caption" color="text.secondary">
+                              <Typography variant="caption" color="rgba(255, 255, 255, 0.5)">
                                 {formatOdds(game.odds?.spread?.awayOdds)}
                               </Typography>
-                            </Box>
-                          </OddsButton>
-                        </StyledTableCell>
-                        <StyledTableCell align="center">
-                          <OddsButton>
-                            <Typography variant="body2">
-                              {game.odds?.moneyline?.away > 0 ? '+' : ''}{game.odds?.moneyline?.away}
-                            </Typography>
-                          </OddsButton>
-                        </StyledTableCell>
-                        <StyledTableCell align="center">
-                          <OddsButton>
-                            <Box>
-                              <Typography variant="body2">
+                            </OddsValue>
+                          </StyledTableCell>
+                          <StyledTableCell align="center">
+                            <OddsValue>
+                              <Typography variant="body2" color="white">
+                                {game.odds?.moneyline?.away > 0 ? '+' : ''}{game.odds?.moneyline?.away}
+                              </Typography>
+                            </OddsValue>
+                          </StyledTableCell>
+                          <StyledTableCell align="center">
+                            <OddsValue>
+                              <Typography variant="body2" color="white">
                                 O {game.odds?.total?.over}
                               </Typography>
-                              <Typography variant="caption" color="text.secondary">
+                              <Typography variant="caption" color="rgba(255, 255, 255, 0.5)">
                                 {formatOdds(game.odds?.total?.overOdds)}
                               </Typography>
-                            </Box>
-                          </OddsButton>
-                        </StyledTableCell>
-                      </StyledTableRow>
+                            </OddsValue>
+                          </StyledTableCell>
+                        </StyledTableRow>
 
-                      {/* Home Team Row */}
-                      <StyledTableRow 
-                        component={RouterLink} 
-                        to={`/games/${game._id}`}
-                        sx={{ textDecoration: 'none', borderBottom: '8px solid transparent' }}
-                      >
-                        <StyledTableCell>
-                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <TeamLogo>{getTeamAbbreviation(game.homeTeam)}</TeamLogo>
-                            <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                              <Typography variant="body1">{game.homeTeam}</Typography>
-                              <Typography variant="caption" color="text.secondary">
-                                {getGameTime(game.startTime)} ET
-                              </Typography>
+                        {/* Home Team Row */}
+                        <StyledTableRow 
+                          component={RouterLink} 
+                          to={`/games/${game._id}`}
+                          className="divider"
+                        >
+                          <StyledTableCell>
+                            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                              <TeamLogo bgcolor={getTeamColor(game.homeTeam)}>
+                                {getTeamAbbreviation(game.homeTeam)}
+                              </TeamLogo>
+                              <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                                <Typography variant="body2" color="white">{game.homeTeam}</Typography>
+                                <Typography variant="caption" color="rgba(255, 255, 255, 0.5)">
+                                  {getGameTime(game.startTime)} ET
+                                </Typography>
+                              </Box>
                             </Box>
-                          </Box>
-                        </StyledTableCell>
-                        <StyledTableCell align="center">
-                          <OddsButton>
-                            <Box>
-                              <Typography variant="body2">
+                          </StyledTableCell>
+                          <StyledTableCell align="center">
+                            <OddsValue>
+                              <Typography variant="body2" color="white">
                                 {game.odds?.spread?.home > 0 ? '+' : ''}{game.odds?.spread?.home}
                               </Typography>
-                              <Typography variant="caption" color="text.secondary">
+                              <Typography variant="caption" color="rgba(255, 255, 255, 0.5)">
                                 {formatOdds(game.odds?.spread?.homeOdds)}
                               </Typography>
-                            </Box>
-                          </OddsButton>
-                        </StyledTableCell>
-                        <StyledTableCell align="center">
-                          <OddsButton>
-                            <Typography variant="body2">
-                              {game.odds?.moneyline?.home > 0 ? '+' : ''}{game.odds?.moneyline?.home}
-                            </Typography>
-                          </OddsButton>
-                        </StyledTableCell>
-                        <StyledTableCell align="center">
-                          <OddsButton>
-                            <Box>
-                              <Typography variant="body2">
+                            </OddsValue>
+                          </StyledTableCell>
+                          <StyledTableCell align="center">
+                            <OddsValue>
+                              <Typography variant="body2" color="white">
+                                {game.odds?.moneyline?.home > 0 ? '+' : ''}{game.odds?.moneyline?.home}
+                              </Typography>
+                            </OddsValue>
+                          </StyledTableCell>
+                          <StyledTableCell align="center">
+                            <OddsValue>
+                              <Typography variant="body2" color="white">
                                 U {game.odds?.total?.under}
                               </Typography>
-                              <Typography variant="caption" color="text.secondary">
+                              <Typography variant="caption" color="rgba(255, 255, 255, 0.5)">
                                 {formatOdds(game.odds?.total?.underOdds)}
                               </Typography>
-                            </Box>
-                          </OddsButton>
-                        </StyledTableCell>
-                      </StyledTableRow>
-                      
-                      {/* More wagers row */}
-                      <StyledTableRow>
-                        <StyledTableCell colSpan={4} sx={{ textAlign: 'right', py: 0.5 }}>
-                          <Button 
-                            component={RouterLink}
-                            to={`/games/${game._id}`}
-                            endIcon={<ArrowIcon fontSize="small" />}
-                            size="small"
-                            sx={{ textTransform: 'none' }}
-                          >
-                            More wagers
-                          </Button>
-                        </StyledTableCell>
-                      </StyledTableRow>
-                    </React.Fragment>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Box>
-        ))
-      )}
+                            </OddsValue>
+                          </StyledTableCell>
+                        </StyledTableRow>
+                        
+                        {/* More wagers row */}
+                        <StyledTableRow>
+                          <StyledTableCell colSpan={4} sx={{ p: 0, borderBottom: index === groupedGames[date].length - 1 ? 'none' : '1px solid rgba(81, 81, 81, 0.5)' }}>
+                            <MoreWagersLink 
+                              component={RouterLink}
+                              to={`/games/${game._id}`}
+                              endIcon={<ArrowIcon fontSize="small" />}
+                              size="small"
+                            >
+                              More wagers
+                            </MoreWagersLink>
+                          </StyledTableCell>
+                        </StyledTableRow>
+                      </React.Fragment>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Box>
+          ))
+        )}
+      </Box>
     </Box>
   );
 };
