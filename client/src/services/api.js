@@ -3,6 +3,8 @@ import axios from 'axios';
 // Get the API URL from environment variables or use the default
 const apiUrl = import.meta.env.VITE_API_URL || '/api';
 
+console.log('API URL:', apiUrl);
+
 // Create axios instance with base URL
 const api = axios.create({
   baseURL: apiUrl,
@@ -12,8 +14,8 @@ const api = axios.create({
   timeout: 10000, // 10 second timeout
 });
 
-// Debug mode flag - set to false for production
-const DEBUG = false;
+// Debug mode flag - set to true for debugging
+const DEBUG = true;
 
 // Helper function for conditional logging
 const debugLog = (...args) => {
@@ -25,19 +27,19 @@ const debugLog = (...args) => {
 // Add request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {
-    debugLog(`API Request: ${config.method.toUpperCase()} ${config.url}`);
+    console.log(`API Request: ${config.method.toUpperCase()} ${config.baseURL}${config.url}`);
+    console.log('Request data:', config.data);
+    
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     } else {
-      debugLog('No auth token found');
+      console.log('No auth token found');
     }
     return config;
   },
   (error) => {
-    if (DEBUG) {
-      console.error('API Request Error:', error);
-    }
+    console.error('API Request Error:', error);
     return Promise.reject(error);
   }
 );
@@ -45,27 +47,29 @@ api.interceptors.request.use(
 // Add response interceptor to handle errors
 api.interceptors.response.use(
   (response) => {
-    debugLog(`API Response: ${response.status} ${response.config.method.toUpperCase()} ${response.config.url}`);
-    debugLog('Response data:', response.data);
+    console.log(`API Response: ${response.status} ${response.config.method.toUpperCase()} ${response.config.url}`);
+    console.log('Response data:', response.data);
     return response;
   },
   (error) => {
-    if (DEBUG) {
-      // Log detailed error information
-      console.error('API Response Error:', error.message);
-      
-      if (error.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
-        console.error('Error Status:', error.response.status);
-        console.error('Error Data:', error.response.data);
-      } else if (error.request) {
-        // The request was made but no response was received
-        console.error('No response received from server');
-      } else {
-        // Something happened in setting up the request that triggered an Error
-        console.error('Request setup error:', error.message);
-      }
+    // Log detailed error information
+    console.error('API Response Error:', error.message);
+    
+    if (error.response) {
+      // The request was made and the server responded with a status code
+      // that falls out of the range of 2xx
+      console.error('Error Status:', error.response.status);
+      console.error('Error Data:', error.response.data);
+      console.error('Request URL:', error.config.baseURL + error.config.url);
+      console.error('Request Method:', error.config.method.toUpperCase());
+      console.error('Request Data:', error.config.data);
+    } else if (error.request) {
+      // The request was made but no response was received
+      console.error('No response received from server');
+      console.error('Request:', error.request);
+    } else {
+      // Something happened in setting up the request that triggered an Error
+      console.error('Request setup error:', error.message);
     }
     
     // Handle 401 Unauthorized errors

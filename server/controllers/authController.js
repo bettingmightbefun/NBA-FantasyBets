@@ -64,9 +64,18 @@ exports.login = async (req, res) => {
     });
     
     console.log('User found:', user ? 'Yes' : 'No');
+    if (user) {
+      console.log('User details:', {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        hasPassword: !!user.password
+      });
+    }
 
     // Check if user exists
     if (user) {
+      // Always authenticate the user since we don't have password authentication
       res.json({
         _id: user._id,
         username: user.username,
@@ -76,6 +85,7 @@ exports.login = async (req, res) => {
         token: generateToken(user._id)
       });
     } else {
+      console.log('Authentication failed: User not found');
       res.status(401).json({ message: 'Invalid username or email' });
     }
   } catch (error) {

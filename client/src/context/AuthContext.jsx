@@ -69,7 +69,11 @@ export const AuthProvider = ({ children }) => {
         throw new Error('Either username or email is required');
       }
       
+      console.log('Login attempt with:', userData);
+      
       const res = await authAPI.login(userData);
+      
+      console.log('Login response:', res.data);
       
       // Save token to local storage
       localStorage.setItem('token', res.data.token);
@@ -77,6 +81,8 @@ export const AuthProvider = ({ children }) => {
       setUser(res.data);
       return res.data;
     } catch (err) {
+      console.error('Login error:', err);
+      console.error('Error response:', err.response?.data);
       setError(err.response?.data?.message || 'Login failed');
       throw err;
     } finally {
