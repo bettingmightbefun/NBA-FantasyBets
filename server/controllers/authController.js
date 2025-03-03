@@ -52,12 +52,18 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { username, email } = req.body;
+    
+    console.log('Login attempt:', { username, email });
 
-    // Find user by username and email (case-insensitive)
-    const user = await User.findOne({ 
-      username: { $regex: new RegExp(`^${username}$`, 'i') },
-      email: { $regex: new RegExp(`^${email}$`, 'i') }
+    // Find user by username OR email (case-insensitive)
+    const user = await User.findOne({
+      $or: [
+        { username: { $regex: new RegExp(`^${username}$`, 'i') } },
+        { email: { $regex: new RegExp(`^${email}$`, 'i') } }
+      ]
     });
+    
+    console.log('User found:', user ? 'Yes' : 'No');
 
     // Check if user exists
     if (user) {
