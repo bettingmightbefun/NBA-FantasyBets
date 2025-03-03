@@ -16,7 +16,7 @@ import {
   Snackbar
 } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
-import axios from 'axios';
+import api, { userAPI } from '../services/api.js';
 import { Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 
@@ -52,7 +52,7 @@ const Profile = () => {
   const fetchUserStats = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('/api/users/stats');
+      const response = await api.get('/users/stats');
       setStats(response.data);
       setLoading(false);
     } catch (err) {
@@ -106,7 +106,7 @@ const Profile = () => {
         updateData.newPassword = formData.newPassword;
       }
       
-      const response = await axios.put('/api/users/profile', updateData);
+      const response = await userAPI.updateProfile(updateData);
       
       updateUser(response.data);
       setSuccess(true);

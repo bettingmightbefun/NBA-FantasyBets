@@ -13,7 +13,7 @@ import {
   CircularProgress
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import axios from 'axios';
+import { oddsAPI } from '../services/api.js';
 
 const GameDetails = () => {
   const { gameId } = useParams();
@@ -26,7 +26,7 @@ const GameDetails = () => {
     const fetchGameDetails = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`/api/odds/${gameId}`);
+        const response = await oddsAPI.getGameById(gameId);
         setGame(response.data);
         setLoading(false);
       } catch (err) {

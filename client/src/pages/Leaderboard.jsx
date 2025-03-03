@@ -16,7 +16,7 @@ import {
   Tab,
   Chip
 } from '@mui/material';
-import axios from 'axios';
+import { userAPI } from '../services/api.js';
 import { useAuth } from '../context/AuthContext';
 
 const Leaderboard = () => {
@@ -30,7 +30,7 @@ const Leaderboard = () => {
     const fetchLeaderboard = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('/api/users/leaderboard');
+        const response = await userAPI.getLeaderboard();
         setUsers(response.data);
         setLoading(false);
       } catch (err) {

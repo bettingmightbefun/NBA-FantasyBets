@@ -16,7 +16,7 @@ import {
   Button
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { betAPI } from '../services/api.js';
 import { useAuth } from '../context/AuthContext';
 
 const BetHistory = () => {
@@ -32,7 +32,7 @@ const BetHistory = () => {
     const fetchBets = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('/api/bets');
+        const response = await betAPI.getUserBets();
         setBets(response.data);
         setLoading(false);
       } catch (err) {
