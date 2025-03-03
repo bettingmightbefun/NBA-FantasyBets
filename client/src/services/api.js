@@ -80,32 +80,32 @@ api.interceptors.response.use(
 
 // Auth API
 export const authAPI = {
-  register: (userData) => api.post('/auth/register', userData),
-  login: (userData) => api.post('/auth/login', userData),
-  getProfile: () => api.get('/auth/profile'),
+  register: (userData) => api.post('/api/auth/register', userData),
+  login: (userData) => api.post('/api/auth/login', userData),
+  getProfile: () => api.get('/api/auth/profile'),
 };
 
 // User API
 export const userAPI = {
-  getLeaderboard: () => api.get('/users/leaderboard'),
-  getUserBets: () => api.get('/users/bets'),
-  updateProfile: (userData) => api.put('/users/profile', userData),
+  getLeaderboard: () => api.get('/api/users/leaderboard'),
+  getUserBets: () => api.get('/api/users/bets'),
+  updateProfile: (userData) => api.put('/api/users/profile', userData),
 };
 
 // Odds API
 export const oddsAPI = {
-  getUpcomingGames: () => api.get('/odds'),
-  getLiveGames: () => api.get('/odds/live'),
-  getFinishedGames: () => api.get('/odds/finished'),
-  getGameById: (id) => api.get(`/odds/${id}`),
+  getUpcomingGames: () => api.get('/api/odds'),
+  getLiveGames: () => api.get('/api/odds/live'),
+  getFinishedGames: () => api.get('/api/odds/finished'),
+  getGameById: (id) => api.get(`/api/odds/${id}`),
 };
 
 // Bet API
 export const betAPI = {
-  placeBet: (betData) => api.post('/bets', betData),
-  getUserBets: () => api.get('/bets'),
-  getBetById: (id) => api.get(`/bets/${id}`),
-  cancelBet: (id) => api.delete(`/bets/${id}`),
+  placeBet: (betData) => api.post('/api/bets', betData),
+  getUserBets: () => api.get('/api/bets'),
+  getBetById: (id) => api.get(`/api/bets/${id}`),
+  cancelBet: (id) => api.delete(`/api/bets/${id}`),
 };
 
 export default api; 
