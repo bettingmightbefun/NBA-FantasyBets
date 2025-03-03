@@ -19,9 +19,15 @@ exports.updateOdds = async () => {
         apiKey: process.env.ODDS_API_KEY,
         regions: 'us',
         markets: 'h2h,spreads,totals',
-        oddsFormat: 'american'
+        oddsFormat: 'american',
+        dateFormat: 'iso'
       }
     });
+
+    // Log API request limits
+    const remainingRequests = response.headers['x-requests-remaining'];
+    const usedRequests = response.headers['x-requests-used'];
+    console.log(`API Rate Limit: ${usedRequests} requests used, ${remainingRequests} requests remaining`);
 
     console.log(`API Response received. Found ${response.data?.length || 0} games.`);
 
@@ -32,6 +38,10 @@ exports.updateOdds = async () => {
     await removeOldGames();
 
     if (response.data && Array.isArray(response.data)) {
+      // Count new and updated games
+      let newGamesCount = 0;
+      let updatedGamesCount = 0;
+      
       for (const gameData of response.data) {
         // Extract game information
         const gameId = gameData.id;
@@ -66,6 +76,7 @@ exports.updateOdds = async () => {
               total: {}
             }
           });
+          newGamesCount++;
         } else {
           // Update existing game
           console.log(`Updating existing game: ${homeTeam} vs ${awayTeam}`);
@@ -77,6 +88,7 @@ exports.updateOdds = async () => {
           if (game.status !== 'finished') {
             game.status = 'scheduled';
           }
+          updatedGamesCount++;
         }
 
         // Update odds
@@ -142,6 +154,7 @@ exports.updateOdds = async () => {
       console.log(`- ${game.homeTeam} vs ${game.awayTeam}, ${new Date(game.startTime).toLocaleString()}`);
     });
 
+    console.log(`\nOdds update summary: ${newGamesCount} new games added, ${updatedGamesCount} existing games updated`);
     console.log('Odds update process completed successfully');
     return true;
   } catch (error) {

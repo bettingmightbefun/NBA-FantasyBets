@@ -33,33 +33,44 @@ exports.getUpcomingGames = async (req, res) => {
       upcomingGames.forEach(game => {
         console.log(`- ${game.homeTeam} vs ${game.awayTeam}, ${new Date(game.startTime).toLocaleString()}`);
       });
+      
+      return res.json(upcomingGames);
     }
     
     // If no upcoming games found, try to find any scheduled games
-    if (upcomingGames.length === 0) {
-      console.log('No upcoming games found in the next 48 hours, checking for any scheduled games');
+    console.log('No upcoming games found in the next 48 hours, checking for any scheduled games');
+    
+    const anyScheduledGames = await Game.find({
+      status: 'scheduled'
+    }).sort({ startTime: 1 }).limit(20); // Limit to 20 games to avoid overwhelming the client
+    
+    console.log(`Found ${anyScheduledGames.length} scheduled games`);
+    
+    // Log the scheduled games found
+    if (anyScheduledGames.length > 0) {
+      console.log('Scheduled games:');
+      anyScheduledGames.forEach(game => {
+        console.log(`- ${game.homeTeam} vs ${game.awayTeam}, ${new Date(game.startTime).toLocaleString()}`);
+      });
       
-      const anyScheduledGames = await Game.find({
-        status: 'scheduled'
-      }).sort({ startTime: 1 });
+      // Trigger an odds update in the background to ensure we have the latest data
+      setTimeout(() => {
+        const { updateOdds } = require('../services/oddsService');
+        updateOdds().catch(err => console.error('Background odds update failed:', err));
+      }, 0);
       
-      console.log(`Found ${anyScheduledGames.length} scheduled games`);
-      
-      // Log the scheduled games found
-      if (anyScheduledGames.length > 0) {
-        console.log('Scheduled games:');
-        anyScheduledGames.forEach(game => {
-          console.log(`- ${game.homeTeam} vs ${game.awayTeam}, ${new Date(game.startTime).toLocaleString()}`);
-        });
-        
-        return res.json(anyScheduledGames);
-      }
-    } else {
-      return res.json(upcomingGames);
+      return res.json(anyScheduledGames);
     }
     
     // If no games found, return empty array
     console.log('No scheduled games found');
+    
+    // Trigger an odds update in the background
+    setTimeout(() => {
+      const { updateOdds } = require('../services/oddsService');
+      updateOdds().catch(err => console.error('Background odds update failed:', err));
+    }, 0);
+    
     return res.json([]);
   } catch (error) {
     console.error('Get upcoming games error:', error);

@@ -59,8 +59,14 @@ app.use('/api/users', userRoutes);
 app.use('/api/bets', betRoutes);
 app.use('/api/odds', oddsRoutes);
 
-// Schedule odds updates every hour
-cron.schedule('0 * * * *', async () => {
+// Run odds update immediately when server starts
+console.log('Running initial odds update on server start...');
+updateOdds()
+  .then(() => console.log('Initial odds update completed successfully'))
+  .catch(error => console.error('Error during initial odds update:', error));
+
+// Schedule odds updates every 30 minutes
+cron.schedule('*/30 * * * *', async () => {
   console.log('Running scheduled odds update');
   try {
     await updateOdds();

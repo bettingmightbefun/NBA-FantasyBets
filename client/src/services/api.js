@@ -14,6 +14,9 @@ const api = axios.create({
   timeout: 30000, // 30 second timeout
 });
 
+// Maximum number of retries for failed requests
+const MAX_RETRIES = 2;
+
 // Debug mode flag - set to true for debugging
 const DEBUG = true;
 
@@ -22,6 +25,23 @@ const debugLog = (...args) => {
   if (DEBUG) {
     console.log(...args);
   }
+};
+
+// Helper function to retry failed requests
+const retryRequest = async (config, error, retryCount = 0) => {
+  if (retryCount >= MAX_RETRIES) {
+    return Promise.reject(error);
+  }
+  
+  console.log(`Retrying request (${retryCount + 1}/${MAX_RETRIES}): ${config.method.toUpperCase()} ${config.url}`);
+  
+  // Wait before retrying (exponential backoff)
+  const delay = Math.pow(2, retryCount) * 1000;
+  await new Promise(resolve => setTimeout(resolve, delay));
+  
+  // Create a new request
+  const newConfig = { ...config };
+  return api(newConfig);
 };
 
 // Add request interceptor to add auth token
@@ -51,7 +71,7 @@ api.interceptors.response.use(
     console.log('Response data:', response.data);
     return response;
   },
-  (error) => {
+  async (error) => {
     // Log detailed error information
     console.error('API Response Error:', error.message);
     
@@ -63,10 +83,22 @@ api.interceptors.response.use(
       console.error('Request URL:', error.config.baseURL + error.config.url);
       console.error('Request Method:', error.config.method.toUpperCase());
       console.error('Request Data:', error.config.data);
+      
+      // Retry on server errors (5xx) or specific client errors
+      if (
+        (error.response.status >= 500 && error.response.status < 600) ||
+        error.response.status === 429 || // Too Many Requests
+        error.response.status === 408    // Request Timeout
+      ) {
+        return retryRequest(error.config, error);
+      }
     } else if (error.request) {
       // The request was made but no response was received
       console.error('No response received from server');
       console.error('Request:', error.request);
+      
+      // Retry network errors
+      return retryRequest(error.config, error);
     } else {
       // Something happened in setting up the request that triggered an Error
       console.error('Request setup error:', error.message);

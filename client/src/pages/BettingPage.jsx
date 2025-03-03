@@ -41,9 +41,14 @@ const BettingPage = () => {
       console.log('Games data:', response.data);
       
       if (response.data && Array.isArray(response.data) && response.data.length > 0) {
-        setGames(response.data);
-        setFilteredGames(response.data);
-        console.log(`Loaded ${response.data.length} games`);
+        // Sort games by start time
+        const sortedGames = [...response.data].sort((a, b) => 
+          new Date(a.startTime) - new Date(b.startTime)
+        );
+        
+        setGames(sortedGames);
+        setFilteredGames(sortedGames);
+        console.log(`Loaded ${sortedGames.length} games`);
       } else {
         console.log('No games found in API response');
         setGames([]);
@@ -61,14 +66,15 @@ const BettingPage = () => {
   }, []);
 
   const handleRefresh = () => {
+    console.log('Manually refreshing games...');
     setRefreshKey(prev => prev + 1);
   };
 
   useEffect(() => {
     fetchGames();
 
-    // Set up polling to refresh odds every hour
-    const intervalId = setInterval(fetchGames, 60 * 60 * 1000);
+    // Set up polling to refresh odds every 15 minutes
+    const intervalId = setInterval(fetchGames, 15 * 60 * 1000);
 
     // Clean up interval on component unmount
     return () => clearInterval(intervalId);
