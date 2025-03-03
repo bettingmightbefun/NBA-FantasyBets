@@ -44,7 +44,7 @@ export const AuthProvider = ({ children }) => {
     try {
       console.log('Register attempt with username:', userData.username);
       
-      const response = await api.post('/auth/register', {
+      const response = await api.post('/api/auth/register', {
         username: userData.username
       });
       
@@ -68,7 +68,7 @@ export const AuthProvider = ({ children }) => {
     try {
       console.log('Login attempt with username:', userData.username);
       
-      const response = await api.post('/auth/login', {
+      const response = await api.post('/api/auth/login', {
         username: userData.username
       });
       
