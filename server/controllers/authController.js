@@ -13,22 +13,33 @@ const generateToken = (id) => {
 // @access  Public
 exports.register = async (req, res) => {
   try {
+    console.log('Register attempt with data:', req.body);
+    
     const { username } = req.body;
+    
+    if (!username) {
+      console.log('Registration failed: No username provided');
+      return res.status(400).json({ message: 'Username is required' });
+    }
 
     // Check if user already exists
+    console.log('Checking if user exists with username:', username);
     const userExists = await User.findOne({ username });
 
     if (userExists) {
+      console.log('Registration failed: Username already taken');
       return res.status(400).json({ message: 'Username already taken' });
     }
 
     // Create user
+    console.log('Creating new user with username:', username);
     const user = await User.create({
       username
     });
 
     if (user) {
       // Generate token
+      console.log('User created successfully, generating token');
       const token = generateToken(user._id);
 
       res.status(201).json({
@@ -37,11 +48,20 @@ exports.register = async (req, res) => {
         token
       });
     } else {
+      console.log('Registration failed: Invalid user data');
       res.status(400).json({ message: 'Invalid user data' });
     }
   } catch (error) {
     console.error('Registration error:', error);
-    res.status(500).json({ message: 'Server error during registration' });
+    console.error('Error stack:', error.stack);
+    console.error('Error message:', error.message);
+    
+    // Send a more detailed error message in development
+    const errorMessage = process.env.NODE_ENV === 'production' 
+      ? 'Server error during registration' 
+      : `Server error: ${error.message}`;
+    
+    res.status(500).json({ message: errorMessage });
   }
 };
 

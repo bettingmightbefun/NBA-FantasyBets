@@ -63,22 +63,39 @@ const Login = () => {
     setIsSubmitting(true);
     setLoginError(null);
     
+    // Initialize the timeout variable outside the try block
+    let serverWakeupMessage = null;
+    
     try {
       // Show a message about the server potentially waking up
-      const serverWakeupMessage = setTimeout(() => {
+      serverWakeupMessage = setTimeout(() => {
         if (isSubmitting) {
           setLoginError('Server is waking up from sleep mode. This may take up to 30 seconds...');
         }
       }, 5000);
       
       await login(formData);
-      clearTimeout(serverWakeupMessage);
+      
+      if (serverWakeupMessage) {
+        clearTimeout(serverWakeupMessage);
+      }
+      
       navigate('/dashboard');
     } catch (error) {
-      clearTimeout(serverWakeupMessage);
-      setLoginError(
-        error.response?.data?.message || 'Login failed. Please check your username.'
-      );
+      if (serverWakeupMessage) {
+        clearTimeout(serverWakeupMessage);
+      }
+      
+      console.error('Login error details:', error);
+      
+      // Handle specific error cases
+      if (error.response?.status === 500) {
+        setLoginError('Server error. The server might be starting up or there might be an issue with the database connection. Please try again in a moment.');
+      } else {
+        setLoginError(
+          error.response?.data?.message || 'Login failed. Please check your username.'
+        );
+      }
     } finally {
       setIsSubmitting(false);
     }

@@ -67,22 +67,39 @@ const Register = () => {
     setIsSubmitting(true);
     setRegisterError(null);
     
+    // Initialize the timeout variable outside the try block
+    let serverWakeupMessage = null;
+    
     try {
       // Show a message about the server potentially waking up
-      const serverWakeupMessage = setTimeout(() => {
+      serverWakeupMessage = setTimeout(() => {
         if (isSubmitting) {
           setRegisterError('Server is waking up from sleep mode. This may take up to 30 seconds...');
         }
       }, 5000);
       
       await register(formData);
-      clearTimeout(serverWakeupMessage);
+      
+      if (serverWakeupMessage) {
+        clearTimeout(serverWakeupMessage);
+      }
+      
       navigate('/dashboard');
     } catch (error) {
-      clearTimeout(serverWakeupMessage);
-      setRegisterError(
-        error.response?.data?.message || 'Registration failed. Please try again.'
-      );
+      if (serverWakeupMessage) {
+        clearTimeout(serverWakeupMessage);
+      }
+      
+      console.error('Registration error details:', error);
+      
+      // Handle specific error cases
+      if (error.response?.status === 500) {
+        setRegisterError('Server error. The server might be starting up or there might be an issue with the database connection. Please try again in a moment.');
+      } else {
+        setRegisterError(
+          error.response?.data?.message || 'Registration failed. Please try again.'
+        );
+      }
     } finally {
       setIsSubmitting(false);
     }
