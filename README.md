@@ -18,8 +18,34 @@ A live 24/7 fantasy betting platform for NBA games where you and your friends ca
 - **Detailed Logging**: Added comprehensive logging throughout the application for easier debugging
 - **Improved Error Handling**: Better error messages and recovery mechanisms for API failures
 - **User Password Support**: Added optional password authentication for increased security
-- **Offline Support**: Improved resilience against temporary API outages
-- **Performance Optimizations**: Reduced bundle size and improved loading times
+- **Security Enhancements**: Removed hardcoded credentials and implemented proper environment variable usage
+
+## Security Best Practices
+
+This application uses environment variables for all sensitive information. Never commit sensitive credentials directly to the codebase.
+
+### Setting Up Environment Variables
+
+1. Create a `.env` file in the server directory based on the `.env.example` template
+2. Add your MongoDB connection string, JWT secret, and API keys to this file
+3. Make sure the `.env` file is included in your `.gitignore` to prevent accidental commits
+
+Example `.env` file:
+```
+PORT=5000
+MONGODB_URI=mongodb+srv://<username>:<password>@<cluster-address>/nba-fantasy-bets?retryWrites=true&w=majority
+JWT_SECRET=your_jwt_secret_key_change_this_in_production
+ODDS_API_KEY=your_odds_api_key
+NBA_API_KEY=your_nba_api_key
+NODE_ENV=development
+```
+
+### Important Security Notes
+
+- Never hardcode credentials in your application code
+- Regularly rotate your API keys and passwords
+- Use environment-specific variables for different deployment environments
+- Always validate and sanitize user inputs to prevent injection attacks
 
 ## Tech Stack
 
