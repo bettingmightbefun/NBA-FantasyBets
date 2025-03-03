@@ -59,6 +59,12 @@ exports.register = async (req, res) => {
           _id: user._id,
           username: user.username,
           isAdmin: user.isAdmin,
+          balance: user.balance,
+          betsPlaced: user.betsPlaced,
+          betsWon: user.betsWon,
+          betsLost: user.betsLost,
+          totalWagered: user.totalWagered,
+          totalWon: user.totalWon,
           token
         });
       } catch (tokenError) {
@@ -107,6 +113,12 @@ exports.login = async (req, res) => {
         _id: user._id,
         username: user.username,
         isAdmin: user.isAdmin,
+        balance: user.balance,
+        betsPlaced: user.betsPlaced,
+        betsWon: user.betsWon,
+        betsLost: user.betsLost,
+        totalWagered: user.totalWagered,
+        totalWon: user.totalWon,
         token
       });
     } else {
@@ -130,7 +142,13 @@ exports.getProfile = async (req, res) => {
       res.json({
         _id: user._id,
         username: user.username,
-        isAdmin: user.isAdmin
+        isAdmin: user.isAdmin,
+        balance: user.balance,
+        betsPlaced: user.betsPlaced,
+        betsWon: user.betsWon,
+        betsLost: user.betsLost,
+        totalWagered: user.totalWagered,
+        totalWon: user.totalWon
       });
     } else {
       res.status(404).json({ message: 'User not found' });
