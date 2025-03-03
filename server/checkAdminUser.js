@@ -2,13 +2,13 @@ require('dotenv').config();
 const mongoose = require('mongoose');
 const User = require('./models/User');
 
-// MongoDB connection string from .env file
-const MONGODB_URI = 'mongodb+srv://matt:matt@cluster0.66xpj.mongodb.net/nba-fantasy-bets?retryWrites=true&w=majority&appName=Cluster0&authSource=admin';
+// Use MongoDB connection string from environment variables
+// const MONGODB_URI = 'mongodb+srv://matt:matt@cluster0.66xpj.mongodb.net/nba-fantasy-bets?retryWrites=true&w=majority&appName=Cluster0&authSource=admin';
 
 async function checkAndUpdateAdminUser() {
   try {
     console.log('Connecting to MongoDB...');
-    await mongoose.connect(MONGODB_URI);
+    await mongoose.connect(process.env.MONGODB_URI);
     console.log('Connected to MongoDB successfully');
     
     // Check if user Matthew exists
