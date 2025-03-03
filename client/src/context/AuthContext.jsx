@@ -39,13 +39,47 @@ export const AuthProvider = ({ children }) => {
     checkLoggedIn();
   }, []);
 
+  // Helper function to retry API calls with exponential backoff
+  const retryApiCall = async (apiCall, maxRetries = 2) => {
+    let retries = 0;
+    let lastError;
+    
+    while (retries <= maxRetries) {
+      try {
+        return await apiCall();
+      } catch (error) {
+        lastError = error;
+        console.log(`Attempt ${retries + 1} failed. ${maxRetries - retries} retries left.`);
+        
+        // If it's not a timeout error, don't retry
+        if (!error.message.includes('timeout')) {
+          throw error;
+        }
+        
+        retries++;
+        
+        if (retries <= maxRetries) {
+          // Wait with exponential backoff (2^retries * 1000ms)
+          const delay = Math.pow(2, retries) * 1000;
+          console.log(`Waiting ${delay}ms before retrying...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
+    }
+    
+    throw lastError;
+  };
+
   // Register user
   const register = async (userData) => {
     try {
       console.log('Register attempt with username:', userData.username);
       
-      const response = await api.post('/api/auth/register', {
-        username: userData.username
+      const response = await retryApiCall(async () => {
+        console.log('Trying to register...');
+        return await api.post('/api/auth/register', {
+          username: userData.username
+        });
       });
       
       console.log('Register response:', response.data);
@@ -68,8 +102,11 @@ export const AuthProvider = ({ children }) => {
     try {
       console.log('Login attempt with username:', userData.username);
       
-      const response = await api.post('/api/auth/login', {
-        username: userData.username
+      const response = await retryApiCall(async () => {
+        console.log('Trying to login...');
+        return await api.post('/api/auth/login', {
+          username: userData.username
+        });
       });
       
       console.log('Login response:', response.data);

@@ -64,9 +64,18 @@ const Login = () => {
     setLoginError(null);
     
     try {
+      // Show a message about the server potentially waking up
+      const serverWakeupMessage = setTimeout(() => {
+        if (isSubmitting) {
+          setLoginError('Server is waking up from sleep mode. This may take up to 30 seconds...');
+        }
+      }, 5000);
+      
       await login(formData);
+      clearTimeout(serverWakeupMessage);
       navigate('/dashboard');
     } catch (error) {
+      clearTimeout(serverWakeupMessage);
       setLoginError(
         error.response?.data?.message || 'Login failed. Please check your username.'
       );
