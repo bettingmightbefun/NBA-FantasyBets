@@ -407,7 +407,7 @@ const BettingPage = () => {
                     <TableRow>
                       <StyledTableCell className="header" width="40%">TEAMS</StyledTableCell>
                       <StyledTableCell className="header" align="center" width="20%">SPREAD</StyledTableCell>
-                      <StyledTableCell className="header" align="center" width="20%">MONEY</StyledTableCell>
+                      <StyledTableCell className="header" align="center" width="20%">MONEY (DECIMAL)</StyledTableCell>
                       <StyledTableCell className="header" align="center" width="20%">TOTAL</StyledTableCell>
                     </TableRow>
                   </TableHead>
@@ -443,7 +443,7 @@ const BettingPage = () => {
                           </StyledTableCell>
                           <StyledTableCell align="center">
                             <OddsValue>
-                              <Typography variant="body2" color="white">
+                              <Typography variant="body1" fontWeight="bold" color="white">
                                 {formatOdds(game.odds?.moneyline?.away)}
                               </Typography>
                             </OddsValue>
@@ -491,7 +491,7 @@ const BettingPage = () => {
                           </StyledTableCell>
                           <StyledTableCell align="center">
                             <OddsValue>
-                              <Typography variant="body2" color="white">
+                              <Typography variant="body1" fontWeight="bold" color="white">
                                 {formatOdds(game.odds?.moneyline?.home)}
                               </Typography>
                             </OddsValue>
