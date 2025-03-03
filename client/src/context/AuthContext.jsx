@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import api, { authAPI } from '../services/api.js';
 
 const AuthContext = createContext();
 
@@ -20,11 +20,8 @@ export const AuthProvider = ({ children }) => {
         const token = localStorage.getItem('token');
         
         if (token) {
-          // Set auth token header
-          axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-          
-          // Get user data
-          const res = await axios.get('/api/auth/profile');
+          // Get user data using the configured API instance
+          const res = await authAPI.getProfile();
           setUser(res.data);
         }
       } catch (err) {
@@ -32,7 +29,6 @@ export const AuthProvider = ({ children }) => {
           console.error('Auth check error:', err);
         }
         localStorage.removeItem('token');
-        delete axios.defaults.headers.common['Authorization'];
       } finally {
         setLoading(false);
       }
@@ -47,13 +43,10 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       setError(null);
       
-      const res = await axios.post('/api/auth/register', userData);
+      const res = await authAPI.register(userData);
       
       // Save token to local storage
       localStorage.setItem('token', res.data.token);
-      
-      // Set auth token header
-      axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
       
       setUser(res.data);
       return res.data;
@@ -76,13 +69,10 @@ export const AuthProvider = ({ children }) => {
         throw new Error('Both username and email are required');
       }
       
-      const res = await axios.post('/api/auth/login', userData);
+      const res = await authAPI.login(userData);
       
       // Save token to local storage
       localStorage.setItem('token', res.data.token);
-      
-      // Set auth token header
-      axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
       
       setUser(res.data);
       return res.data;
@@ -99,9 +89,6 @@ export const AuthProvider = ({ children }) => {
     // Remove token from local storage
     localStorage.removeItem('token');
     
-    // Remove auth header
-    delete axios.defaults.headers.common['Authorization'];
-    
     setUser(null);
   }, []);
 
@@ -111,7 +98,7 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       setError(null);
       
-      const res = await axios.put('/api/users/profile', userData);
+      const res = await api.put('/users/profile', userData);
       
       setUser(prevUser => ({ ...prevUser, ...res.data }));
       return res.data;
@@ -136,11 +123,8 @@ export const AuthProvider = ({ children }) => {
         return null;
       }
       
-      // Ensure auth header is set
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      
-      // Get user data
-      const res = await axios.get('/api/auth/profile');
+      // Get user data using the configured API instance
+      const res = await authAPI.getProfile();
       
       setUser(res.data);
       return res.data;
@@ -152,7 +136,6 @@ export const AuthProvider = ({ children }) => {
       // If unauthorized (401), clear token and user
       if (err.response?.status === 401) {
         localStorage.removeItem('token');
-        delete axios.defaults.headers.common['Authorization'];
         setUser(null);
       }
       
