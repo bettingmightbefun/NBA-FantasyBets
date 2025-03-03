@@ -24,6 +24,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { oddsAPI, betAPI } from '../services/api';
 import { formatDate, formatTime, formatOdds } from '../utils/formatters';
+import AdminPanel from '../components/AdminPanel';
 
 // Turn off all debug logging
 const DEBUG = false;
@@ -387,6 +388,11 @@ const Dashboard = () => {
           </Paper>
         </Grid>
       </Grid>
+      
+      {/* Admin Panel - Only visible to admin users */}
+      {user && user.isAdmin && (
+        <AdminPanel />
+      )}
     </Box>
   );
 };

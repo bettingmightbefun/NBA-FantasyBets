@@ -94,6 +94,11 @@ export const userAPI = {
   getLeaderboard: () => api.get('/api/users/leaderboard'),
   getUserBets: () => api.get('/api/users/bets'),
   updateProfile: (userData) => api.put('/api/users/profile', userData),
+  // Admin endpoints
+  getAllUsers: () => api.get('/api/users'),
+  getUserById: (id) => api.get(`/api/users/${id}`),
+  updateUser: (id, userData) => api.put(`/api/users/${id}`, userData),
+  deleteUser: (id) => api.delete(`/api/users/${id}`),
 };
 
 // Odds API

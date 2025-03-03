@@ -58,6 +58,7 @@ exports.register = async (req, res) => {
         res.status(201).json({
           _id: user._id,
           username: user.username,
+          isAdmin: user.isAdmin,
           token
         });
       } catch (tokenError) {
@@ -105,6 +106,7 @@ exports.login = async (req, res) => {
       res.json({
         _id: user._id,
         username: user.username,
+        isAdmin: user.isAdmin,
         token
       });
     } else {
@@ -127,7 +129,8 @@ exports.getProfile = async (req, res) => {
     if (user) {
       res.json({
         _id: user._id,
-        username: user.username
+        username: user.username,
+        isAdmin: user.isAdmin
       });
     } else {
       res.status(404).json({ message: 'User not found' });
