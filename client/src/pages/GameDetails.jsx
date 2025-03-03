@@ -14,6 +14,7 @@ import {
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { oddsAPI } from '../services/api.js';
+import { formatOdds, americanToDecimal } from '../utils/formatters.js';
 
 const GameDetails = () => {
   const { gameId } = useParams();
@@ -161,14 +162,14 @@ const GameDetails = () => {
                   <Grid container spacing={1}>
                     <Grid item xs={6}>
                       <Typography variant="body1">{game.homeTeam}</Typography>
-                      <Typography variant="h6" color={game.odds?.moneyline?.home > 0 ? 'success.main' : 'error.main'}>
-                        {game.odds?.moneyline?.home > 0 ? '+' : ''}{game.odds?.moneyline?.home}
+                      <Typography variant="h6">
+                        {formatOdds(game.odds?.moneyline?.home)}
                       </Typography>
                     </Grid>
                     <Grid item xs={6}>
                       <Typography variant="body1">{game.awayTeam}</Typography>
-                      <Typography variant="h6" color={game.odds?.moneyline?.away > 0 ? 'success.main' : 'error.main'}>
-                        {game.odds?.moneyline?.away > 0 ? '+' : ''}{game.odds?.moneyline?.away}
+                      <Typography variant="h6">
+                        {formatOdds(game.odds?.moneyline?.away)}
                       </Typography>
                     </Grid>
                   </Grid>
@@ -187,13 +188,13 @@ const GameDetails = () => {
                     <Grid item xs={6}>
                       <Typography variant="body1">{game.homeTeam}</Typography>
                       <Typography variant="h6">
-                        {game.odds?.spread?.home > 0 ? '+' : ''}{game.odds?.spread?.home} ({game.odds?.spread?.homeOdds})
+                        {game.odds?.spread?.home > 0 ? '+' : ''}{game.odds?.spread?.home} ({formatOdds(game.odds?.spread?.homeOdds)})
                       </Typography>
                     </Grid>
                     <Grid item xs={6}>
                       <Typography variant="body1">{game.awayTeam}</Typography>
                       <Typography variant="h6">
-                        {game.odds?.spread?.away > 0 ? '+' : ''}{game.odds?.spread?.away} ({game.odds?.spread?.awayOdds})
+                        {game.odds?.spread?.away > 0 ? '+' : ''}{game.odds?.spread?.away} ({formatOdds(game.odds?.spread?.awayOdds)})
                       </Typography>
                     </Grid>
                   </Grid>
@@ -212,13 +213,13 @@ const GameDetails = () => {
                     <Grid item xs={6}>
                       <Typography variant="body1">Over</Typography>
                       <Typography variant="h6">
-                        {game.odds?.total?.over} ({game.odds?.total?.overOdds})
+                        {game.odds?.total?.over} ({formatOdds(game.odds?.total?.overOdds)})
                       </Typography>
                     </Grid>
                     <Grid item xs={6}>
                       <Typography variant="body1">Under</Typography>
                       <Typography variant="h6">
-                        {game.odds?.total?.under} ({game.odds?.total?.underOdds})
+                        {game.odds?.total?.under} ({formatOdds(game.odds?.total?.underOdds)})
                       </Typography>
                     </Grid>
                   </Grid>
