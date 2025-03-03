@@ -3,8 +3,6 @@ import { Link as RouterLink } from 'react-router-dom';
 import {
   Box,
   Button,
-  Card,
-  CardContent,
   CircularProgress,
   Divider,
   Grid,
@@ -16,10 +14,60 @@ import {
   Tab,
   Paper,
   Chip,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  styled,
 } from '@mui/material';
-import { Search as SearchIcon, Refresh as RefreshIcon } from '@mui/icons-material';
+import { Search as SearchIcon, Refresh as RefreshIcon, ArrowForwardIos as ArrowIcon } from '@mui/icons-material';
 import { oddsAPI } from '../services/api';
 import { formatDate, formatTime, formatOdds } from '../utils/formatters';
+
+// Styled components for the modern design
+const StyledTableCell = styled(TableCell)(({ theme }) => ({
+  padding: '16px 8px',
+  borderBottom: `1px solid ${theme.palette.divider}`,
+  '&.header': {
+    backgroundColor: theme.palette.mode === 'dark' ? '#1A1A1A' : theme.palette.grey[100],
+    color: theme.palette.text.secondary,
+    fontSize: '0.75rem',
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+  },
+}));
+
+const StyledTableRow = styled(TableRow)(({ theme }) => ({
+  '&:hover': {
+    backgroundColor: theme.palette.mode === 'dark' ? '#2A2A2A' : theme.palette.grey[50],
+    cursor: 'pointer',
+  },
+}));
+
+const OddsButton = styled(Button)(({ theme }) => ({
+  width: '100%',
+  justifyContent: 'center',
+  borderRadius: 4,
+  padding: '8px',
+  backgroundColor: theme.palette.mode === 'dark' ? '#2A2A2A' : theme.palette.grey[100],
+  color: theme.palette.text.primary,
+  '&:hover': {
+    backgroundColor: theme.palette.mode === 'dark' ? '#3A3A3A' : theme.palette.grey[200],
+  },
+}));
+
+const TeamLogo = styled('div')(({ theme }) => ({
+  width: 30,
+  height: 30,
+  borderRadius: '50%',
+  backgroundColor: theme.palette.primary.main,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginRight: theme.spacing(1),
+}));
 
 const BettingPage = () => {
   const [games, setGames] = useState([]);
@@ -127,6 +175,23 @@ const BettingPage = () => {
   const groupedGames = groupGamesByDate();
   const dates = Object.keys(groupedGames);
 
+  // Get team abbreviation
+  const getTeamAbbreviation = (teamName) => {
+    const words = teamName.split(' ');
+    if (words.length === 1) return teamName.substring(0, 3).toUpperCase();
+    return words[words.length - 1].substring(0, 3).toUpperCase();
+  };
+
+  // Format time for display
+  const getGameTime = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+  };
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
@@ -138,7 +203,7 @@ const BettingPage = () => {
   return (
     <Box>
       <Typography variant="h4" gutterBottom>
-        NBA Betting
+        NBA Odds
       </Typography>
 
       {/* Search and Filter */}
@@ -201,7 +266,7 @@ const BettingPage = () => {
         </Alert>
       )}
 
-      {/* Tabs for bet types */}
+      {/* Tabs for leagues */}
       <Paper sx={{ mb: 3 }}>
         <Tabs
           value={tabValue}
@@ -210,10 +275,10 @@ const BettingPage = () => {
           textColor="primary"
           variant="fullWidth"
         >
-          <Tab label="All Games" />
-          <Tab label="Moneyline" />
-          <Tab label="Spread" />
-          <Tab label="Total" />
+          <Tab label="NBA" />
+          <Tab label="MLB" disabled />
+          <Tab label="NFL" disabled />
+          <Tab label="NHL" disabled />
         </Tabs>
       </Paper>
 
@@ -237,113 +302,137 @@ const BettingPage = () => {
             <Typography variant="h6" gutterBottom>
               {date}
             </Typography>
-            <Divider sx={{ mb: 2 }} />
             
-            <Grid container spacing={3}>
-              {groupedGames[date].map((game) => (
-                <Grid item xs={12} key={game._id}>
-                  <Card sx={{ mb: 2 }}>
-                    <CardContent>
-                      <Grid container spacing={2}>
-                        {/* Game Info */}
-                        <Grid item xs={12} md={3}>
-                          <Box sx={{ textAlign: 'center' }}>
-                            <Typography variant="subtitle1" fontWeight="bold">
-                              {game.homeTeam} vs {game.awayTeam}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              {formatTime(game.startTime)}
-                            </Typography>
-                          </Box>
-                        </Grid>
-                        
-                        {/* Moneyline */}
-                        <Grid item xs={12} sm={4} md={3}>
-                          <Box sx={{ textAlign: 'center' }}>
-                            <Typography variant="caption" color="text.secondary">
-                              Moneyline
-                            </Typography>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-around', mt: 1 }}>
-                              <Box>
-                                <Typography variant="body2">{game.homeTeam}</Typography>
-                                <Typography variant="body1" fontWeight="bold">
-                                  {formatOdds(game.odds?.moneyline?.home)}
-                                </Typography>
-                              </Box>
-                              <Box>
-                                <Typography variant="body2">{game.awayTeam}</Typography>
-                                <Typography variant="body1" fontWeight="bold">
-                                  {formatOdds(game.odds?.moneyline?.away)}
-                                </Typography>
-                              </Box>
+            <TableContainer component={Paper} sx={{ mb: 3, backgroundColor: 'background.paper' }}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <StyledTableCell className="header" width="40%">TEAMS</StyledTableCell>
+                    <StyledTableCell className="header" align="center" width="20%">SPREAD</StyledTableCell>
+                    <StyledTableCell className="header" align="center" width="20%">MONEY</StyledTableCell>
+                    <StyledTableCell className="header" align="center" width="20%">TOTAL</StyledTableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {groupedGames[date].map((game) => (
+                    <React.Fragment key={game._id}>
+                      {/* Away Team Row */}
+                      <StyledTableRow 
+                        component={RouterLink} 
+                        to={`/games/${game._id}`}
+                        sx={{ textDecoration: 'none' }}
+                      >
+                        <StyledTableCell>
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <TeamLogo>{getTeamAbbreviation(game.awayTeam)}</TeamLogo>
+                            <Box>
+                              <Typography variant="body1">{game.awayTeam}</Typography>
+                              <Typography variant="caption" color="text.secondary">@</Typography>
                             </Box>
                           </Box>
-                        </Grid>
-                        
-                        {/* Spread */}
-                        <Grid item xs={12} sm={4} md={3}>
-                          <Box sx={{ textAlign: 'center' }}>
-                            <Typography variant="caption" color="text.secondary">
-                              Spread
+                        </StyledTableCell>
+                        <StyledTableCell align="center">
+                          <OddsButton>
+                            <Box>
+                              <Typography variant="body2">
+                                {game.odds?.spread?.away > 0 ? '+' : ''}{game.odds?.spread?.away}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {formatOdds(game.odds?.spread?.awayOdds)}
+                              </Typography>
+                            </Box>
+                          </OddsButton>
+                        </StyledTableCell>
+                        <StyledTableCell align="center">
+                          <OddsButton>
+                            <Typography variant="body2">
+                              {game.odds?.moneyline?.away > 0 ? '+' : ''}{game.odds?.moneyline?.away}
                             </Typography>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-around', mt: 1 }}>
-                              <Box>
-                                <Typography variant="body2">{game.homeTeam}</Typography>
-                                <Typography variant="body1" fontWeight="bold">
-                                  {game.odds?.spread?.home} ({formatOdds(game.odds?.spread?.homeOdds)})
-                                </Typography>
-                              </Box>
-                              <Box>
-                                <Typography variant="body2">{game.awayTeam}</Typography>
-                                <Typography variant="body1" fontWeight="bold">
-                                  {game.odds?.spread?.away} ({formatOdds(game.odds?.spread?.awayOdds)})
-                                </Typography>
-                              </Box>
+                          </OddsButton>
+                        </StyledTableCell>
+                        <StyledTableCell align="center">
+                          <OddsButton>
+                            <Box>
+                              <Typography variant="body2">
+                                O {game.odds?.total?.over}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {formatOdds(game.odds?.total?.overOdds)}
+                              </Typography>
+                            </Box>
+                          </OddsButton>
+                        </StyledTableCell>
+                      </StyledTableRow>
+
+                      {/* Home Team Row */}
+                      <StyledTableRow 
+                        component={RouterLink} 
+                        to={`/games/${game._id}`}
+                        sx={{ textDecoration: 'none', borderBottom: '8px solid transparent' }}
+                      >
+                        <StyledTableCell>
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <TeamLogo>{getTeamAbbreviation(game.homeTeam)}</TeamLogo>
+                            <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                              <Typography variant="body1">{game.homeTeam}</Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {getGameTime(game.startTime)} ET
+                              </Typography>
                             </Box>
                           </Box>
-                        </Grid>
-                        
-                        {/* Total */}
-                        <Grid item xs={12} sm={4} md={2}>
-                          <Box sx={{ textAlign: 'center' }}>
-                            <Typography variant="caption" color="text.secondary">
-                              Total
-                            </Typography>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-around', mt: 1 }}>
-                              <Box>
-                                <Typography variant="body2">Over</Typography>
-                                <Typography variant="body1" fontWeight="bold">
-                                  {game.odds?.total?.over} ({formatOdds(game.odds?.total?.overOdds)})
-                                </Typography>
-                              </Box>
-                              <Box>
-                                <Typography variant="body2">Under</Typography>
-                                <Typography variant="body1" fontWeight="bold">
-                                  {game.odds?.total?.under} ({formatOdds(game.odds?.total?.underOdds)})
-                                </Typography>
-                              </Box>
+                        </StyledTableCell>
+                        <StyledTableCell align="center">
+                          <OddsButton>
+                            <Box>
+                              <Typography variant="body2">
+                                {game.odds?.spread?.home > 0 ? '+' : ''}{game.odds?.spread?.home}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {formatOdds(game.odds?.spread?.homeOdds)}
+                              </Typography>
                             </Box>
-                          </Box>
-                        </Grid>
-                        
-                        {/* Bet Button */}
-                        <Grid item xs={12} md={1} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          <Button
+                          </OddsButton>
+                        </StyledTableCell>
+                        <StyledTableCell align="center">
+                          <OddsButton>
+                            <Typography variant="body2">
+                              {game.odds?.moneyline?.home > 0 ? '+' : ''}{game.odds?.moneyline?.home}
+                            </Typography>
+                          </OddsButton>
+                        </StyledTableCell>
+                        <StyledTableCell align="center">
+                          <OddsButton>
+                            <Box>
+                              <Typography variant="body2">
+                                U {game.odds?.total?.under}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {formatOdds(game.odds?.total?.underOdds)}
+                              </Typography>
+                            </Box>
+                          </OddsButton>
+                        </StyledTableCell>
+                      </StyledTableRow>
+                      
+                      {/* More wagers row */}
+                      <StyledTableRow>
+                        <StyledTableCell colSpan={4} sx={{ textAlign: 'right', py: 0.5 }}>
+                          <Button 
                             component={RouterLink}
                             to={`/games/${game._id}`}
-                            variant="contained"
-                            color="primary"
-                            fullWidth
+                            endIcon={<ArrowIcon fontSize="small" />}
+                            size="small"
+                            sx={{ textTransform: 'none' }}
                           >
-                            Bet
+                            More wagers
                           </Button>
-                        </Grid>
-                      </Grid>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
+                        </StyledTableCell>
+                      </StyledTableRow>
+                    </React.Fragment>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
           </Box>
         ))
       )}
