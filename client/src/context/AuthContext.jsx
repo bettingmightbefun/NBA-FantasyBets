@@ -19,18 +19,34 @@ export const AuthProvider = ({ children }) => {
     const checkLoggedIn = async () => {
       try {
         const token = localStorage.getItem('token');
+        const storedUser = localStorage.getItem('user');
         
         if (token) {
-          // Get user data using the configured API instance
-          const res = await authAPI.getProfile();
-          setUser(res.data);
-          setIsAuthenticated(true);
+          try {
+            // Try to get fresh user data from the API
+            const res = await authAPI.getProfile();
+            setUser(res.data);
+            setIsAuthenticated(true);
+          } catch (apiError) {
+            console.error('API profile fetch failed, using stored user data:', apiError);
+            
+            // If API call fails but we have stored user data, use that
+            if (storedUser) {
+              const userData = JSON.parse(storedUser);
+              setUser(userData);
+              setIsAuthenticated(true);
+            } else {
+              // If no stored user data, clear token
+              localStorage.removeItem('token');
+            }
+          }
         }
       } catch (err) {
         if (DEBUG) {
           console.error('Auth check error:', err);
         }
         localStorage.removeItem('token');
+        localStorage.removeItem('user');
       } finally {
         setLoading(false);
       }
@@ -86,8 +102,8 @@ export const AuthProvider = ({ children }) => {
       
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-        setUser(response.data.user);
+        localStorage.setItem('user', JSON.stringify(response.data));
+        setUser(response.data);
         setIsAuthenticated(true);
         return response.data;
       }
@@ -113,8 +129,8 @@ export const AuthProvider = ({ children }) => {
       
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-        setUser(response.data.user);
+        localStorage.setItem('user', JSON.stringify(response.data));
+        setUser(response.data);
         setIsAuthenticated(true);
         return response.data;
       }
@@ -126,8 +142,9 @@ export const AuthProvider = ({ children }) => {
 
   // Logout user
   const logout = useCallback(() => {
-    // Remove token from local storage
+    // Remove data from local storage
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
     
     setUser(null);
     setIsAuthenticated(false);

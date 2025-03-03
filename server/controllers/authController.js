@@ -1,11 +1,22 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 
-// Generate JWT token
+// Generate JWT token with error handling
 const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: '30d'
-  });
+  try {
+    if (!process.env.JWT_SECRET) {
+      console.error('JWT_SECRET is not defined in environment variables');
+      throw new Error('JWT configuration error');
+    }
+    
+    console.log('Generating JWT token for user ID:', id);
+    return jwt.sign({ id }, process.env.JWT_SECRET, {
+      expiresIn: '30d'
+    });
+  } catch (error) {
+    console.error('Error generating JWT token:', error);
+    throw new Error('Authentication token generation failed');
+  }
 };
 
 // @desc    Register a new user
@@ -40,13 +51,19 @@ exports.register = async (req, res) => {
     if (user) {
       // Generate token
       console.log('User created successfully, generating token');
-      const token = generateToken(user._id);
+      try {
+        const token = generateToken(user._id);
+        console.log('Token generated successfully');
 
-      res.status(201).json({
-        _id: user._id,
-        username: user.username,
-        token
-      });
+        res.status(201).json({
+          _id: user._id,
+          username: user.username,
+          token
+        });
+      } catch (tokenError) {
+        console.error('Token generation failed:', tokenError);
+        res.status(500).json({ message: 'Authentication error during registration' });
+      }
     } else {
       console.log('Registration failed: Invalid user data');
       res.status(400).json({ message: 'Invalid user data' });
