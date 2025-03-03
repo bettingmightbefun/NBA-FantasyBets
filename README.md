@@ -1,68 +1,55 @@
 # NBA Fantasy Bets
 
-A live 24/7 fantasy betting platform for NBA games where you and your friends can place bets with virtual currency throughout the NBA season.
+A full-stack web application for betting on NBA games with virtual currency. Users can create accounts, place bets on upcoming NBA games, and track their performance on a leaderboard.
 
 ## Features
 
-- **Live Odds**: Real-time NBA betting odds that update hourly
-- **Multiple Bet Types**: Place bets on money lines, spreads, and totals
-- **User Accounts**: Create an account to track your betting history and performance
-- **Leaderboard**: Compete with friends to see who has the best betting record
-- **Season-Long Stats**: Track your betting performance throughout the NBA season
+- User authentication (register, login, profile management)
+- Real-time NBA game odds from The Odds API
+- Virtual currency betting system
+- Leaderboard to track user performance
+- Responsive design for desktop and mobile
 
 ## Tech Stack
 
-### Backend
-- Node.js with Express
-- MongoDB with Mongoose
-- JWT for authentication
-- Axios for API requests
-- Node-cron for scheduled tasks
+- **Frontend**: React, Vite, Tailwind CSS
+- **Backend**: Node.js, Express
+- **Database**: MongoDB
+- **Authentication**: JWT
+- **API Integration**: The Odds API for NBA game data
 
-### Frontend
-- React with React Router
-- Material UI for components and styling
-- Axios for API requests
-- Chart.js for data visualization
-
-## Getting Started
+## Local Development
 
 ### Prerequisites
+
 - Node.js (v14 or higher)
-- MongoDB Atlas account (free tier)
-- API key from The Odds API (free tier with 500 requests/month)
+- MongoDB Atlas account or local MongoDB instance
+- The Odds API key
 
-### MongoDB Atlas Setup
+### Setup
 
-1. Go to [MongoDB Atlas](https://www.mongodb.com/cloud/atlas/register) and create an account
-2. Click "Build a Database" and select the FREE tier (M0 Sandbox)
-3. Choose AWS as the provider and select a region close to you
-4. Click "Create Cluster" (this will take a few minutes to provision)
-5. When prompted to set up security:
-   - Create a database user (remember this username and password)
-   - For network access, choose "Allow access from anywhere" for simplicity
-6. Once your cluster is created, click "Connect"
-7. Select "Connect your application"
-8. Copy the connection string - it will look like:
-   ```
-   mongodb+srv://<username>:<password>@cluster0.xxxxx.mongodb.net/?retryWrites=true&w=majority
-   ```
-9. Replace `<username>` and `<password>` with your database user credentials
-10. Update the MONGODB_URI in your .env file with this connection string, adding the database name:
-    ```
-    MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.xxxxx.mongodb.net/nba-fantasy-bets?retryWrites=true&w=majority
-    ```
+1. **Clone the repository**
 
-### Installation
-
-1. Clone the repository
-```
-git clone https://github.com/yourusername/nba-fantasy-bets.git
-cd nba-fantasy-bets
+```bash
+git clone https://github.com/bettingmightbefun/NBA-FantasyBets.git
+cd NBA-FantasyBets
 ```
 
-2. Install dependencies for both server and client
+2. **Set up environment variables**
+
+Create a `.env` file in the server directory:
+
 ```
+PORT=5001
+MONGODB_URI=your_mongodb_connection_string
+JWT_SECRET=your_jwt_secret_key
+ODDS_API_KEY=your_odds_api_key
+NODE_ENV=development
+```
+
+3. **Install dependencies**
+
+```bash
 # Install server dependencies
 cd server
 npm install
@@ -72,65 +59,67 @@ cd ../client
 npm install
 ```
 
-3. Configure environment variables
-   - Create a `.env` file in the server directory based on the `.env.example` file
-   - Add your MongoDB Atlas connection string, JWT secret, and The Odds API key
+4. **Start the application**
 
-4. Start the development servers
+You can use the included batch file to start both the server and client:
+
+```bash
+# From the root directory
+./start-app.bat
 ```
-# Start the backend server
+
+Or start them manually:
+
+```bash
+# Start the server
 cd server
 npm run dev
 
-# Start the frontend client
-cd ../client
+# In a new terminal, start the client
+cd client
 npm run dev
 ```
 
-5. Open your browser and navigate to `http://localhost:3000`
+5. **Access the application**
+
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:5001
+
+## Deployment
+
+See the [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) for detailed instructions on deploying the application to Netlify and Render.
 
 ## API Endpoints
 
 ### Authentication
+
 - `POST /api/auth/register` - Register a new user
 - `POST /api/auth/login` - Login a user
 - `GET /api/auth/profile` - Get user profile
 
 ### Users
+
 - `GET /api/users/leaderboard` - Get user leaderboard
-- `GET /api/users/bets` - Get user's betting history
+- `GET /api/users/bets` - Get user bets
+- `PUT /api/users/profile` - Update user profile
 
 ### Odds
-- `GET /api/odds` - Get upcoming games with odds
+
+- `GET /api/odds` - Get upcoming games
 - `GET /api/odds/live` - Get live games
 - `GET /api/odds/finished` - Get finished games
-- `GET /api/odds/:id` - Get a specific game with odds
+- `GET /api/odds/:id` - Get game by ID
 
 ### Bets
-- `POST /api/bets` - Place a new bet
-- `GET /api/bets` - Get user's bets
-- `GET /api/bets/:id` - Get a specific bet
+
+- `POST /api/bets` - Place a bet
+- `GET /api/bets` - Get user bets
+- `GET /api/bets/:id` - Get bet by ID
 - `DELETE /api/bets/:id` - Cancel a bet
-
-## Deployment
-
-The application can be deployed to any hosting service that supports Node.js applications:
-
-1. Build the client
-```
-cd client
-npm run build
-```
-
-2. Deploy the server with the built client files
-```
-cd ../server
-npm start
-```
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License.
 
 ## Acknowledgements
 
