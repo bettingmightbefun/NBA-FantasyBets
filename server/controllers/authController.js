@@ -51,9 +51,9 @@ exports.register = async (req, res) => {
 // @access  Public
 exports.login = async (req, res) => {
   try {
-    const { username, email } = req.body;
+    const { username, email, password } = req.body;
     
-    console.log('Login attempt:', { username, email });
+    console.log('Login attempt:', { username, email, hasPassword: !!password });
 
     // Find user by username OR email (case-insensitive)
     const user = await User.findOne({
@@ -75,7 +75,18 @@ exports.login = async (req, res) => {
 
     // Check if user exists
     if (user) {
-      // Always authenticate the user since we don't have password authentication
+      // If the user has a password and a password was provided, validate it
+      if (user.password && password) {
+        const isMatch = await user.comparePassword(password);
+        if (!isMatch) {
+          console.log('Authentication failed: Invalid password');
+          return res.status(401).json({ message: 'Invalid credentials' });
+        }
+      } else {
+        // For backward compatibility, allow login without password
+        console.log('Authentication successful: No password check required');
+      }
+      
       res.json({
         _id: user._id,
         username: user.username,

@@ -11,8 +11,12 @@ import {
   Paper,
   Alert,
   CircularProgress,
-  FormHelperText
+  FormHelperText,
+  InputAdornment,
+  IconButton
 } from '@mui/material';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -20,9 +24,11 @@ const Login = () => {
   
   const [formData, setFormData] = useState({
     username: '',
-    email: ''
+    email: '',
+    password: ''
   });
   
+  const [showPassword, setShowPassword] = useState(false);
   const [formErrors, setFormErrors] = useState({});
   const [loginError, setLoginError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -41,6 +47,10 @@ const Login = () => {
         [name]: null
       });
     }
+  };
+  
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
   
   const validateForm = () => {
@@ -99,7 +109,7 @@ const Login = () => {
           
           <Box component="form" onSubmit={handleSubmit} noValidate>
             <FormHelperText sx={{ mb: 2, textAlign: 'center' }}>
-              Enter either your username or email to sign in
+              Enter your username or email to sign in
             </FormHelperText>
             
             <TextField
@@ -131,6 +141,33 @@ const Login = () => {
               onChange={handleChange}
               error={!!formErrors.email}
               helperText={formErrors.email}
+            />
+            
+            <TextField
+              margin="normal"
+              fullWidth
+              name="password"
+              label="Password"
+              type={showPassword ? 'text' : 'password'}
+              id="password"
+              autoComplete="current-password"
+              value={formData.password}
+              onChange={handleChange}
+              error={!!formErrors.password}
+              helperText={formErrors.password}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="toggle password visibility"
+                      onClick={togglePasswordVisibility}
+                      edge="end"
+                    >
+                      {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
             />
             
             <Button

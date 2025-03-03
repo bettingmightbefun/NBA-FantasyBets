@@ -12,6 +12,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // Check if user is logged in on initial load
   useEffect(() => {
@@ -23,6 +24,7 @@ export const AuthProvider = ({ children }) => {
           // Get user data using the configured API instance
           const res = await authAPI.getProfile();
           setUser(res.data);
+          setIsAuthenticated(true);
         }
       } catch (err) {
         if (DEBUG) {
@@ -49,6 +51,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('token', res.data.token);
       
       setUser(res.data);
+      setIsAuthenticated(true);
       return res.data;
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed');
@@ -61,32 +64,30 @@ export const AuthProvider = ({ children }) => {
   // Login user
   const login = useCallback(async (userData) => {
     try {
-      setLoading(true);
-      setError(null);
+      console.log('Login attempt with:', { 
+        username: userData.username, 
+        email: userData.email,
+        passwordProvided: !!userData.password 
+      });
       
-      // Check that at least one of username or email is provided
-      if (!userData.username && !userData.email) {
-        throw new Error('Either username or email is required');
+      const response = await api.post('/auth/login', {
+        username: userData.username,
+        email: userData.email,
+        password: userData.password
+      });
+      
+      console.log('Login response:', response.data);
+      
+      if (response.data.token) {
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+        setUser(response.data.user);
+        setIsAuthenticated(true);
+        return response.data;
       }
-      
-      console.log('Login attempt with:', userData);
-      
-      const res = await authAPI.login(userData);
-      
-      console.log('Login response:', res.data);
-      
-      // Save token to local storage
-      localStorage.setItem('token', res.data.token);
-      
-      setUser(res.data);
-      return res.data;
-    } catch (err) {
-      console.error('Login error:', err);
-      console.error('Error response:', err.response?.data);
-      setError(err.response?.data?.message || 'Login failed');
-      throw err;
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
     }
   }, []);
 
@@ -96,6 +97,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('token');
     
     setUser(null);
+    setIsAuthenticated(false);
   }, []);
 
   // Update user profile
@@ -159,8 +161,9 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     updateProfile,
-    refreshUserData
-  }), [user, loading, error, register, login, logout, updateProfile, refreshUserData]);
+    refreshUserData,
+    isAuthenticated
+  }), [user, loading, error, register, login, logout, updateProfile, refreshUserData, isAuthenticated]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }; 
