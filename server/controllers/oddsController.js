@@ -27,6 +27,25 @@ exports.getUpcomingGames = async (req, res) => {
     
     console.log(`Found ${upcomingGames.length} upcoming games in the next 48 hours`);
     
+    // Group games by date for better logging
+    const gamesByDate = {};
+    upcomingGames.forEach(game => {
+      const dateString = new Date(game.startTime).toDateString();
+      if (!gamesByDate[dateString]) {
+        gamesByDate[dateString] = [];
+      }
+      gamesByDate[dateString].push(`${game.homeTeam} vs ${game.awayTeam}`);
+    });
+    
+    // Log games by date
+    console.log('\nUpcoming games by date:');
+    Object.keys(gamesByDate).sort().forEach(date => {
+      console.log(`\n${date} (${gamesByDate[date].length} games):`);
+      gamesByDate[date].forEach((game, index) => {
+        console.log(`  ${index + 1}. ${game}`);
+      });
+    });
+    
     // Log the games found
     if (upcomingGames.length > 0) {
       console.log('Upcoming games:');
