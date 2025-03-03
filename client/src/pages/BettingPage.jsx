@@ -446,6 +446,9 @@ const BettingPage = () => {
                               <Typography variant="body2" color="white">
                                 {game.odds?.moneyline?.away > 0 ? '+' : ''}{game.odds?.moneyline?.away}
                               </Typography>
+                              <Typography variant="caption" color="rgba(255, 255, 255, 0.5)">
+                                {formatOdds(game.odds?.moneyline?.away)}
+                              </Typography>
                             </OddsValue>
                           </StyledTableCell>
                           <StyledTableCell align="center">
@@ -493,6 +496,9 @@ const BettingPage = () => {
                             <OddsValue>
                               <Typography variant="body2" color="white">
                                 {game.odds?.moneyline?.home > 0 ? '+' : ''}{game.odds?.moneyline?.home}
+                              </Typography>
+                              <Typography variant="caption" color="rgba(255, 255, 255, 0.5)">
+                                {formatOdds(game.odds?.moneyline?.home)}
                               </Typography>
                             </OddsValue>
                           </StyledTableCell>
