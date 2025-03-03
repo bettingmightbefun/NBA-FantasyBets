@@ -10,7 +10,8 @@ import {
   Grid,
   Paper,
   Alert,
-  CircularProgress
+  CircularProgress,
+  FormHelperText
 } from '@mui/material';
 
 const Login = () => {
@@ -45,15 +46,14 @@ const Login = () => {
   const validateForm = () => {
     const errors = {};
     
-    // Username validation
-    if (!formData.username.trim()) {
-      errors.username = 'Username is required';
+    // Either username or email is required
+    if (!formData.username.trim() && !formData.email.trim()) {
+      errors.username = 'Either username or email is required';
+      errors.email = 'Either username or email is required';
     }
     
-    // Email validation
-    if (!formData.email.trim()) {
-      errors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+    // Email validation if provided
+    if (formData.email.trim() && !/\S+@\S+\.\S+/.test(formData.email)) {
       errors.email = 'Email is invalid';
     }
     
@@ -98,9 +98,12 @@ const Login = () => {
           )}
           
           <Box component="form" onSubmit={handleSubmit} noValidate>
+            <FormHelperText sx={{ mb: 2, textAlign: 'center' }}>
+              Enter either your username or email to sign in
+            </FormHelperText>
+            
             <TextField
               margin="normal"
-              required
               fullWidth
               id="username"
               label="Username"
@@ -113,9 +116,12 @@ const Login = () => {
               helperText={formErrors.username}
             />
             
+            <Typography variant="body2" align="center" sx={{ my: 1 }}>
+              OR
+            </Typography>
+            
             <TextField
               margin="normal"
-              required
               fullWidth
               id="email"
               label="Email Address"

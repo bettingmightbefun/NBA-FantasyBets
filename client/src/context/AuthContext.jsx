@@ -64,9 +64,9 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       setError(null);
       
-      // Make sure we have both username and email
-      if (!userData.username || !userData.email) {
-        throw new Error('Both username and email are required');
+      // Check that at least one of username or email is provided
+      if (!userData.username && !userData.email) {
+        throw new Error('Either username or email is required');
       }
       
       const res = await authAPI.login(userData);
