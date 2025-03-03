@@ -67,8 +67,8 @@ const BettingPage = () => {
   useEffect(() => {
     fetchGames();
 
-    // Set up polling to refresh odds every 5 minutes
-    const intervalId = setInterval(fetchGames, 5 * 60 * 1000);
+    // Set up polling to refresh odds every hour
+    const intervalId = setInterval(fetchGames, 60 * 60 * 1000);
 
     // Clean up interval on component unmount
     return () => clearInterval(intervalId);

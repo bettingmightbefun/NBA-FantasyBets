@@ -27,7 +27,7 @@ const Home = () => {
     {
       icon: <BettingIcon fontSize="large" />,
       title: 'Live NBA Betting',
-      description: 'Place bets on NBA games with real-time odds that update every 5 minutes. Bet on money lines, spreads, and totals.',
+      description: 'Place bets on NBA games with real-time odds that update every hour. Bet on money lines, spreads, and totals.',
     },
     {
       icon: <LeaderboardIcon fontSize="large" />,
@@ -188,7 +188,7 @@ const Home = () => {
                   2. Browse NBA Games
                 </Typography>
                 <Typography paragraph>
-                  View upcoming NBA games with real-time odds that update every 5 minutes.
+                  View upcoming NBA games with real-time odds that update every hour.
                 </Typography>
                 
                 <Typography variant="h6" gutterBottom>
