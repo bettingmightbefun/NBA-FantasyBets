@@ -184,6 +184,9 @@ export const AuthProvider = ({ children }) => {
       // Get user data using the configured API instance
       const res = await authAPI.getProfile();
       
+      // Update localStorage with fresh user data
+      localStorage.setItem('user', JSON.stringify(res.data));
+      
       setUser(res.data);
       return res.data;
     } catch (err) {

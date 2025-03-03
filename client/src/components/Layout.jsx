@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
 import {
   AppBar,
@@ -35,7 +35,7 @@ import { useAuth } from '../context/AuthContext';
 const drawerWidth = 240;
 
 const Layout = ({ children }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUserData } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
@@ -43,6 +43,13 @@ const Layout = ({ children }) => {
   
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
+  
+  // Refresh user data when component mounts and when location changes
+  useEffect(() => {
+    refreshUserData().catch(err => {
+      console.error('Error refreshing user data:', err);
+    });
+  }, [refreshUserData, location.pathname]);
   
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
