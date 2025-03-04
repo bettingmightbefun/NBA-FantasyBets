@@ -106,9 +106,12 @@ const Betslip = ({ bet, onRemove, onPlaceBet }) => {
     
     // Calculate potential winnings based on odds
     if (amount && !isNaN(amount) && bet.odds) {
+      // Make sure we're working with a number, not a string
       const decimalOdds = parseFloat(bet.odds);
-      // For a $1 bet at 1.95 odds, you win $0.95 (not $1.95)
-      const potentialWin = (parseFloat(amount) * (decimalOdds - 1)).toFixed(2);
+      const wager = parseFloat(amount);
+      
+      // Calculate potential winnings (profit only)
+      const potentialWin = (wager * (decimalOdds - 1)).toFixed(2);
       setToWinAmount(potentialWin);
     } else {
       setToWinAmount('');
@@ -121,9 +124,12 @@ const Betslip = ({ bet, onRemove, onPlaceBet }) => {
     
     // Calculate wager amount based on desired winnings
     if (amount && !isNaN(amount) && bet.odds) {
+      // Make sure we're working with a number, not a string
       const decimalOdds = parseFloat(bet.odds);
-      // If you want to win $0.95 at 1.95 odds, you need to bet $1
-      const wagerNeeded = (parseFloat(amount) / (decimalOdds - 1)).toFixed(2);
+      const desiredWin = parseFloat(amount);
+      
+      // Calculate required wager
+      const wagerNeeded = (desiredWin / (decimalOdds - 1)).toFixed(2);
       setWagerAmount(wagerNeeded);
     } else {
       setWagerAmount('');
@@ -179,7 +185,7 @@ const Betslip = ({ bet, onRemove, onPlaceBet }) => {
                 </Typography>
               )}
               <OddsText>
-                {formatOdds(bet.odds)}
+                {bet.odds}
               </OddsText>
             </Box>
           </Box>

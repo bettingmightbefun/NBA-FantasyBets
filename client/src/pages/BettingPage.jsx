@@ -302,7 +302,7 @@ const BettingPage = () => {
     
     const matchup = `${game.awayTeam} @ ${game.homeTeam}`;
     
-    // Format the odds value for display
+    // Get the correct odds value based on bet type
     let formattedOdds = odds;
     if (betType === 'Spread') {
       formattedOdds = team === game.awayTeam ? 
@@ -315,8 +315,9 @@ const BettingPage = () => {
         game.odds?.moneyline?.away : game.odds?.moneyline?.home;
     }
     
-    // Ensure odds are in decimal format
-    const decimalOdds = parseFloat(formattedOdds).toFixed(2);
+    // Convert American odds to decimal format
+    // This is needed because the formatOdds function in the Betslip component expects decimal odds
+    const decimalOdds = formatOdds(formattedOdds);
     
     setSelectedBet({
       gameId: game._id,
