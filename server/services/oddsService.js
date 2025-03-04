@@ -343,10 +343,6 @@ exports.updateOdds = async () => {
     });
 
     console.log(`\nOdds update summary: ${newGamesCount} new games added, ${updatedGamesCount} existing games updated`);
-    
-    // Update game results and settle bets
-    await exports.updateGameResults();
-    
     console.log('Odds update process completed successfully');
     return true;
   } catch (error) {
@@ -371,20 +367,8 @@ async function updatePastGames() {
     
     for (const game of pastGames) {
       game.status = 'finished';
-      
-      // Set random scores for demo purposes
-      // In a real implementation, you would fetch actual scores from an NBA API
-      if (!game.homeScore && !game.awayScore) {
-        game.homeScore = Math.floor(Math.random() * 40) + 80; // Random score between 80-120
-        game.awayScore = Math.floor(Math.random() * 40) + 80; // Random score between 80-120
-        console.log(`Set random scores: ${game.homeTeam} ${game.homeScore} - ${game.awayScore} ${game.awayTeam}`);
-      }
-      
       await game.save();
       console.log(`Marked game as finished: ${game.homeTeam} vs ${game.awayTeam} (${new Date(game.startTime).toLocaleString()})`);
-      
-      // Settle bets for this game
-      await settleBets(game);
     }
     
     return true;
