@@ -13,9 +13,14 @@ A live 24/7 fantasy betting platform for NBA games where you and your friends ca
 - **Secure Authentication**: JWT-based authentication with enhanced error handling and logging
 - **Modern Sportsbook UI**: Dark-themed interface with intuitive betting cards and clear odds display
 - **Interactive Betslip**: Dynamic betslip that appears when selecting bets with real-time calculations
+- **Bet Cancellation**: Users can cancel pending bets until the match starts
+- **Admin Balance Management**: Administrators can adjust user balances directly from the Admin Panel
 
 ## Recent Updates
 
+- **Admin Balance Management**: Added ability for admins to update user balances directly from the Admin Panel
+- **Bet Cancellation System**: Implemented functionality for users to cancel their bets until the match starts
+- **Automatic Bet Settlement**: Enhanced system to automatically update bet statuses and pay out winnings when games finish
 - **Betslip Component**: Added a fully functional betslip that appears when users select a bet
 - **Modern Sportsbook Layout**: Redesigned the betting page with a dark theme and improved layout
 - **Enhanced Odds Display**: Clearer presentation of decimal odds with consistent formatting
@@ -152,10 +157,24 @@ npm run dev
 5. The potential winnings will automatically calculate in the "TO WIN" field
 6. Click "Place Bet" to confirm your wager
 
+### Cancelling a Bet
+1. Navigate to the Bet History page
+2. Find the pending bet you wish to cancel (must be before the game starts)
+3. Click the cancel icon in the Actions column
+4. Confirm the cancellation in the dialog
+5. Your wager amount will be refunded to your balance immediately
+
 ### Understanding Odds
 - All odds are displayed in decimal format (e.g., 1.95)
 - For a $1 bet at odds of 1.95, your potential profit is $0.95
 - The betslip shows the net profit (excluding your original stake)
+
+### Admin Features
+1. Navigate to the Admin Panel (accessible only to admin users)
+2. View all user accounts, balances, and betting statistics
+3. Update user balances by clicking the balance icon next to any user
+4. Enter the new balance amount and confirm to update the user's funds
+5. Delete user accounts if necessary (except your own admin account)
 
 ## API Endpoints
 
@@ -167,6 +186,7 @@ npm run dev
 ### Users
 - `GET /api/users/leaderboard` - Get user leaderboard
 - `GET /api/users/bets` - Get user's betting history
+- `PUT /api/users/:id` - Update user information (including balance)
 
 ### Odds
 - `GET /api/odds` - Get upcoming games with odds
@@ -178,7 +198,7 @@ npm run dev
 - `POST /api/bets` - Place a new bet
 - `GET /api/bets` - Get user's bets
 - `GET /api/bets/:id` - Get a specific bet
-- `DELETE /api/bets/:id` - Cancel a bet
+- `DELETE /api/bets/:id` - Cancel a bet (if game hasn't started)
 
 ## Deployment
 
@@ -214,6 +234,11 @@ The application is deployed on Render.com with the following configuration:
 4. **Betslip Calculation Issues**
    - If the TO WIN amount seems incorrect, refresh the page and try again
    - Ensure you're entering a valid number in the wager field
+
+5. **Bet Cancellation Issues**
+   - Bets can only be cancelled if the game hasn't started yet
+   - If the cancel button is not visible, the game may have already started
+   - Check the server logs if cancellation fails unexpectedly
 
 ## Contributing
 
