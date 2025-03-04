@@ -11,9 +11,15 @@ A live 24/7 fantasy betting platform for NBA games where you and your friends ca
 - **Season-Long Stats**: Track your betting performance throughout the NBA season
 - **Responsive Design**: Fully responsive UI that works on desktop and mobile devices
 - **Secure Authentication**: JWT-based authentication with enhanced error handling and logging
+- **Modern Sportsbook UI**: Dark-themed interface with intuitive betting cards and clear odds display
+- **Interactive Betslip**: Dynamic betslip that appears when selecting bets with real-time calculations
 
 ## Recent Updates
 
+- **Betslip Component**: Added a fully functional betslip that appears when users select a bet
+- **Modern Sportsbook Layout**: Redesigned the betting page with a dark theme and improved layout
+- **Enhanced Odds Display**: Clearer presentation of decimal odds with consistent formatting
+- **Improved Game Time Visibility**: Fixed display issues to ensure game times are always visible
 - **Enhanced Authentication System**: Improved user authentication with better token management and error handling
 - **Detailed Logging**: Added comprehensive logging throughout the application for easier debugging
 - **Improved Error Handling**: Better error messages and recovery mechanisms for API failures
@@ -136,6 +142,21 @@ npm run dev
 
 5. Open your browser and navigate to `http://localhost:5173`
 
+## Using the Betting Interface
+
+### Placing a Bet
+1. Browse the available games on the Betting page
+2. Click on any odds box (spread, moneyline, or total) to select a bet
+3. The betslip will appear with your selection
+4. Enter your wager amount in the "WAGER" field
+5. The potential winnings will automatically calculate in the "TO WIN" field
+6. Click "Place Bet" to confirm your wager
+
+### Understanding Odds
+- All odds are displayed in decimal format (e.g., 1.95)
+- For a $1 bet at odds of 1.95, your potential profit is $0.95
+- The betslip shows the net profit (excluding your original stake)
+
 ## API Endpoints
 
 ### Authentication
@@ -189,6 +210,10 @@ The application is deployed on Render.com with the following configuration:
 3. **API Rate Limiting**
    - The free tier of The Odds API has a limit of 500 requests per month
    - Consider upgrading if you need more requests
+
+4. **Betslip Calculation Issues**
+   - If the TO WIN amount seems incorrect, refresh the page and try again
+   - Ensure you're entering a valid number in the wager field
 
 ## Contributing
 
