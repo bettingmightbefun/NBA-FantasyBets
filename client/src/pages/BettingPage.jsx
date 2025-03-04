@@ -106,6 +106,8 @@ const GameTime = styled(Typography)(({ theme }) => ({
   color: 'rgba(255, 255, 255, 0.7)',
   fontSize: '0.75rem',
   marginTop: '4px',
+  display: 'block',
+  visibility: 'visible',
 }));
 
 // Team color mapping
@@ -529,7 +531,14 @@ const BettingPage = () => {
                           {/* Game Time Row */}
                           <StyledTableRow>
                             <StyledTableCell colSpan={4} sx={{ p: 0, borderBottom: 'none' }}>
-                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 2, py: 1 }}>
+                              <Box sx={{ 
+                                display: 'flex', 
+                                justifyContent: 'space-between', 
+                                alignItems: 'center', 
+                                px: 2, 
+                                py: 1,
+                                visibility: 'visible'
+                              }}>
                                 <GameTime>
                                   {getGameTime(game.startTime)} ET
                                 </GameTime>
