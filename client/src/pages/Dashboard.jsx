@@ -219,51 +219,6 @@ const Dashboard = () => {
         </Grid>
       </Grid>
 
-      {/* Quick Links */}
-      <Paper sx={{ p: 2, mb: 4 }}>
-        <Typography variant="h6" gutterBottom>
-          Quick Links
-        </Typography>
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={4}>
-            <Button
-              component={RouterLink}
-              to="/betting"
-              variant="outlined"
-              startIcon={<BettingIcon />}
-              fullWidth
-              sx={{ py: 1 }}
-            >
-              Place Bets
-            </Button>
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <Button
-              component={RouterLink}
-              to="/history"
-              variant="outlined"
-              startIcon={<HistoryIcon />}
-              fullWidth
-              sx={{ py: 1 }}
-            >
-              Bet History
-            </Button>
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <Button
-              component={RouterLink}
-              to="/leaderboard"
-              variant="outlined"
-              startIcon={<LeaderboardIcon />}
-              fullWidth
-              sx={{ py: 1 }}
-            >
-              Leaderboard
-            </Button>
-          </Grid>
-        </Grid>
-      </Paper>
-
       <Grid container spacing={4}>
         {/* Upcoming Games */}
         <Grid item xs={12} md={7}>
