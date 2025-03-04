@@ -21,9 +21,11 @@ import {
   CircularProgress,
   Alert,
   Divider,
-  TablePagination
+  TablePagination,
+  TextField,
+  Grid
 } from '@mui/material';
-import { Delete as DeleteIcon, Check as CheckIcon, Close as CloseIcon } from '@mui/icons-material';
+import { Delete as DeleteIcon, Check as CheckIcon, Close as CloseIcon, AccountBalance as BalanceIcon } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { userAPI } from '../services/api';
 
@@ -37,22 +39,28 @@ const AdminPanel = () => {
   const [successMessage, setSuccessMessage] = useState(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  
+  // Balance management state
+  const [balanceDialogOpen, setBalanceDialogOpen] = useState(false);
+  const [userToUpdateBalance, setUserToUpdateBalance] = useState(null);
+  const [newBalance, setNewBalance] = useState('');
+  const [balanceError, setBalanceError] = useState('');
 
   // Fetch all users
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        setLoading(true);
-        const response = await userAPI.getAllUsers();
-        setUsers(response.data);
-        setLoading(false);
-      } catch (err) {
-        setError('Failed to load users. You may not have admin privileges.');
-        setLoading(false);
-        console.error('Error fetching users:', err);
-      }
-    };
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const response = await userAPI.getAllUsers();
+      setUsers(response.data);
+      setLoading(false);
+    } catch (err) {
+      setError('Failed to load users. You may not have admin privileges.');
+      setLoading(false);
+      console.error('Error fetching users:', err);
+    }
+  };
 
+  useEffect(() => {
     fetchUsers();
   }, []);
 
@@ -103,6 +111,64 @@ const AdminPanel = () => {
       setError(`Failed to delete user: ${err.response?.data?.message || err.message}`);
       console.error('Error deleting user:', err);
       handleCloseDeleteDialog();
+    }
+  };
+
+  // Open balance update dialog
+  const handleOpenBalanceDialog = (user) => {
+    setUserToUpdateBalance(user);
+    setNewBalance(user.balance.toString());
+    setBalanceDialogOpen(true);
+    setBalanceError('');
+  };
+
+  // Close balance update dialog
+  const handleCloseBalanceDialog = () => {
+    setBalanceDialogOpen(false);
+    setUserToUpdateBalance(null);
+    setNewBalance('');
+    setBalanceError('');
+  };
+
+  // Update user balance
+  const handleUpdateBalance = async () => {
+    if (!userToUpdateBalance) return;
+
+    // Validate balance
+    const balanceValue = parseFloat(newBalance);
+    if (isNaN(balanceValue) || balanceValue < 0) {
+      setBalanceError('Please enter a valid positive number');
+      return;
+    }
+
+    try {
+      // Call API to update user balance
+      await userAPI.updateUser(userToUpdateBalance._id, {
+        ...userToUpdateBalance,
+        balance: balanceValue
+      });
+      
+      // Update users list
+      setUsers(users.map(u => 
+        u._id === userToUpdateBalance._id 
+          ? { ...u, balance: balanceValue } 
+          : u
+      ));
+      
+      // Show success message
+      setSuccessMessage(`${userToUpdateBalance.username}'s balance has been updated to ${formatCurrency(balanceValue)}.`);
+      
+      // Clear success message after 5 seconds
+      setTimeout(() => {
+        setSuccessMessage(null);
+      }, 5000);
+      
+      // Close dialog
+      handleCloseBalanceDialog();
+    } catch (err) {
+      setError(`Failed to update balance: ${err.response?.data?.message || err.message}`);
+      console.error('Error updating balance:', err);
+      handleCloseBalanceDialog();
     }
   };
 
@@ -184,11 +250,11 @@ const AdminPanel = () => {
             <TableBody>
               {users
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((user) => (
-                  <TableRow key={user._id}>
-                    <TableCell>{user.username}</TableCell>
+                .map((userItem) => (
+                  <TableRow key={userItem._id}>
+                    <TableCell>{userItem.username}</TableCell>
                     <TableCell>
-                      {user.isAdmin ? (
+                      {userItem.isAdmin ? (
                         <Chip 
                           icon={<CheckIcon />} 
                           label="Yes" 
@@ -204,18 +270,29 @@ const AdminPanel = () => {
                         />
                       )}
                     </TableCell>
-                    <TableCell align="right">{formatCurrency(user.balance)}</TableCell>
-                    <TableCell align="right">{user.betsPlaced}</TableCell>
-                    <TableCell align="right">{user.betsWon}/{user.betsLost}</TableCell>
-                    <TableCell>{formatDate(user.createdAt)}</TableCell>
+                    <TableCell align="right">{formatCurrency(userItem.balance)}</TableCell>
+                    <TableCell align="right">{userItem.betsPlaced}</TableCell>
+                    <TableCell align="right">{userItem.betsWon}/{userItem.betsLost}</TableCell>
+                    <TableCell>{formatDate(userItem.createdAt)}</TableCell>
                     <TableCell align="center">
-                      <IconButton 
-                        color="error" 
-                        onClick={() => handleOpenDeleteDialog(user)}
-                        disabled={user._id === user._id} // Prevent deleting yourself
-                      >
-                        <DeleteIcon />
-                      </IconButton>
+                      <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                        <IconButton 
+                          color="primary" 
+                          onClick={() => handleOpenBalanceDialog(userItem)}
+                          title="Update Balance"
+                          sx={{ mr: 1 }}
+                        >
+                          <BalanceIcon />
+                        </IconButton>
+                        <IconButton 
+                          color="error" 
+                          onClick={() => handleOpenDeleteDialog(userItem)}
+                          disabled={userItem._id === user._id} // Prevent deleting yourself
+                          title="Delete User"
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </Box>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -234,6 +311,22 @@ const AdminPanel = () => {
         />
       </Paper>
       
+      {/* Balance Management Section */}
+      <Paper sx={{ p: 3, mb: 4 }}>
+        <Typography variant="h5" gutterBottom>
+          Balance Management
+        </Typography>
+        <Divider sx={{ mb: 2 }} />
+        
+        <Typography variant="body1" paragraph>
+          Use the balance icon in the actions column to update a user's balance. You can add or remove funds as needed.
+        </Typography>
+        
+        <Alert severity="info" sx={{ mb: 2 }}>
+          Tip: To give a user more funds, simply update their balance to a higher amount. To remove funds, update to a lower amount.
+        </Alert>
+      </Paper>
+      
       {/* Delete Confirmation Dialog */}
       <Dialog
         open={deleteDialogOpen}
@@ -249,6 +342,58 @@ const AdminPanel = () => {
           <Button onClick={handleCloseDeleteDialog}>Cancel</Button>
           <Button onClick={handleDeleteUser} color="error" variant="contained">
             Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
+      
+      {/* Balance Update Dialog */}
+      <Dialog
+        open={balanceDialogOpen}
+        onClose={handleCloseBalanceDialog}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Update User Balance</DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ mb: 2 }}>
+            Update the balance for user "{userToUpdateBalance?.username}".
+          </DialogContentText>
+          
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={12} sm={6}>
+              <Typography variant="body2" color="text.secondary">
+                Current Balance:
+              </Typography>
+              <Typography variant="h6">
+                {userToUpdateBalance ? formatCurrency(userToUpdateBalance.balance) : '$0.00'}
+              </Typography>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                autoFocus
+                margin="dense"
+                label="New Balance"
+                type="number"
+                fullWidth
+                value={newBalance}
+                onChange={(e) => setNewBalance(e.target.value)}
+                error={!!balanceError}
+                helperText={balanceError}
+                InputProps={{
+                  startAdornment: <Typography sx={{ mr: 1 }}>$</Typography>,
+                }}
+                inputProps={{
+                  min: 0,
+                  step: 100,
+                }}
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseBalanceDialog}>Cancel</Button>
+          <Button onClick={handleUpdateBalance} color="primary" variant="contained">
+            Update Balance
           </Button>
         </DialogActions>
       </Dialog>

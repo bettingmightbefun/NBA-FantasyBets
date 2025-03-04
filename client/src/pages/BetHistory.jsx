@@ -14,79 +14,96 @@ import {
   CircularProgress,
   TablePagination,
   Button,
-  Alert
+  Alert,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  IconButton,
+  Tooltip,
+  Snackbar
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { betAPI } from '../services/api.js';
 import { useAuth } from '../context/AuthContext';
+import CancelIcon from '@mui/icons-material/Cancel';
 
 const BetHistory = () => {
-  const { user } = useAuth();
+  const { user, refreshUserData } = useAuth();
   const navigate = useNavigate();
   const [bets, setBets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  
+  // Cancellation state
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [betToCancel, setBetToCancel] = useState(null);
+  const [cancelLoading, setCancelLoading] = useState(false);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
+
+  const fetchBets = async () => {
+    try {
+      setLoading(true);
+      const response = await betAPI.getUserBets();
+      
+      console.log('Bet response data:', response.data);
+      
+      if (!response.data || !Array.isArray(response.data)) {
+        console.error('Invalid bet data format:', response.data);
+        setError('Invalid bet data received from server');
+        setLoading(false);
+        return;
+      }
+      
+      // Process the bets to ensure proper data formatting
+      const processedBets = response.data
+        .filter(bet => bet) // Filter out null/undefined bets
+        .map(bet => {
+          console.log('Processing bet:', bet);
+          
+          // Ensure we have a valid bet object
+          if (!bet || typeof bet !== 'object') {
+            console.error('Invalid bet object:', bet);
+            return null;
+          }
+          
+          // Ensure bet has required fields
+          if (!bet._id) {
+            console.error('Bet missing ID:', bet);
+            return null;
+          }
+          
+          return {
+            ...bet,
+            // Ensure potential winnings is a valid number
+            potentialWinnings: isNaN(bet.potentialWinnings) ? 
+              calculatePotentialWinnings(bet.amount, bet.odds) : 
+              bet.potentialWinnings,
+            // Ensure amount is a valid number
+            amount: isNaN(bet.amount) ? 0 : bet.amount,
+            // Ensure status is valid
+            status: bet.status || 'pending'
+          };
+        })
+        .filter(bet => bet !== null); // Remove any null entries
+      
+      console.log('Processed bets:', processedBets);
+      
+      setBets(processedBets);
+      setLoading(false);
+    } catch (err) {
+      console.error('Error fetching bets:', err);
+      setError(`Failed to load bet history: ${err.response?.data?.message || err.message}`);
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchBets = async () => {
-      try {
-        setLoading(true);
-        const response = await betAPI.getUserBets();
-        
-        console.log('Bet response data:', response.data);
-        
-        if (!response.data || !Array.isArray(response.data)) {
-          console.error('Invalid bet data format:', response.data);
-          setError('Invalid bet data received from server');
-          setLoading(false);
-          return;
-        }
-        
-        // Process the bets to ensure proper data formatting
-        const processedBets = response.data
-          .filter(bet => bet) // Filter out null/undefined bets
-          .map(bet => {
-            console.log('Processing bet:', bet);
-            
-            // Ensure we have a valid bet object
-            if (!bet || typeof bet !== 'object') {
-              console.error('Invalid bet object:', bet);
-              return null;
-            }
-            
-            // Ensure bet has required fields
-            if (!bet._id) {
-              console.error('Bet missing ID:', bet);
-              return null;
-            }
-            
-            return {
-              ...bet,
-              // Ensure potential winnings is a valid number
-              potentialWinnings: isNaN(bet.potentialWinnings) ? 
-                calculatePotentialWinnings(bet.amount, bet.odds) : 
-                bet.potentialWinnings,
-              // Ensure amount is a valid number
-              amount: isNaN(bet.amount) ? 0 : bet.amount,
-              // Ensure status is valid
-              status: bet.status || 'pending'
-            };
-          })
-          .filter(bet => bet !== null); // Remove any null entries
-        
-        console.log('Processed bets:', processedBets);
-        
-        setBets(processedBets);
-        setLoading(false);
-      } catch (err) {
-        console.error('Error fetching bets:', err);
-        setError(`Failed to load bet history: ${err.response?.data?.message || err.message}`);
-        setLoading(false);
-      }
-    };
-
     fetchBets();
   }, []);
 
@@ -120,6 +137,8 @@ const BetHistory = () => {
         return 'error';
       case 'pending':
         return 'error'; // Changed from 'warning' to 'error' for red color
+      case 'cancelled':
+        return 'default';
       default:
         return 'default';
     }
@@ -127,7 +146,9 @@ const BetHistory = () => {
 
   const getStatusLabel = (status) => {
     // Change 'pending' to 'LIVE'
-    return status === 'pending' ? 'LIVE' : status;
+    if (status === 'pending') return 'LIVE';
+    // Capitalize first letter
+    return status.charAt(0).toUpperCase() + status.slice(1);
   };
 
   const formatDate = (dateString) => {
@@ -183,6 +204,82 @@ const BetHistory = () => {
     }
   };
 
+  // Check if a bet can be cancelled
+  const canCancelBet = (bet) => {
+    if (!bet || bet.status !== 'pending') return false;
+    
+    // Check if game has started
+    if (!bet.game || !bet.game.startTime) return false;
+    
+    const gameStartTime = new Date(bet.game.startTime);
+    const now = new Date();
+    
+    // Can cancel if game hasn't started yet
+    return gameStartTime > now;
+  };
+
+  // Open cancel dialog
+  const handleOpenCancelDialog = (event, bet) => {
+    // Stop propagation to prevent row click
+    event.stopPropagation();
+    
+    if (!canCancelBet(bet)) {
+      setSnackbarMessage('This bet cannot be cancelled. The game may have already started.');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+      return;
+    }
+    
+    setBetToCancel(bet);
+    setCancelDialogOpen(true);
+  };
+
+  // Close cancel dialog
+  const handleCloseCancelDialog = () => {
+    setCancelDialogOpen(false);
+    setBetToCancel(null);
+  };
+
+  // Cancel bet
+  const handleCancelBet = async () => {
+    if (!betToCancel) return;
+    
+    try {
+      setCancelLoading(true);
+      
+      // Call API to cancel bet
+      const response = await betAPI.cancelBet(betToCancel._id);
+      
+      console.log('Bet cancelled successfully:', response.data);
+      
+      // Show success message
+      setSnackbarMessage('Bet cancelled successfully. Your funds have been returned to your balance.');
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
+      
+      // Refresh user data to update balance
+      refreshUserData();
+      
+      // Refresh bets list
+      fetchBets();
+      
+      // Close dialog
+      handleCloseCancelDialog();
+    } catch (err) {
+      console.error('Error cancelling bet:', err);
+      setSnackbarMessage(`Failed to cancel bet: ${err.response?.data?.message || err.message}`);
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+      setCancelLoading(false);
+      handleCloseCancelDialog();
+    }
+  };
+
+  // Handle snackbar close
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
+  };
+
   if (loading) {
     return (
       <Container sx={{ mt: 4, textAlign: 'center' }}>
@@ -221,6 +318,9 @@ const BetHistory = () => {
         <Typography variant="subtitle1" gutterBottom>
           View all your past and pending bets
         </Typography>
+        <Alert severity="info" sx={{ mt: 2 }}>
+          You can cancel pending bets up until the match starts. Click the cancel icon to cancel a bet.
+        </Alert>
       </Box>
       
       {bets.length === 0 ? (
@@ -251,6 +351,7 @@ const BetHistory = () => {
                   <TableCell>Status</TableCell>
                   <TableCell>Placed At</TableCell>
                   <TableCell>Settled At</TableCell>
+                  <TableCell align="center">Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -283,6 +384,21 @@ const BetHistory = () => {
                       <TableCell>
                         {bet.settledAt ? formatDate(bet.settledAt) : '-'}
                       </TableCell>
+                      <TableCell align="center">
+                        {canCancelBet(bet) ? (
+                          <Tooltip title="Cancel Bet">
+                            <IconButton 
+                              size="small" 
+                              color="error" 
+                              onClick={(e) => handleOpenCancelDialog(e, bet)}
+                            >
+                              <CancelIcon />
+                            </IconButton>
+                          </Tooltip>
+                        ) : (
+                          <Box sx={{ width: 40 }} /> // Empty space to maintain alignment
+                        )}
+                      </TableCell>
                     </TableRow>
                   ))}
               </TableBody>
@@ -299,6 +415,62 @@ const BetHistory = () => {
           />
         </Paper>
       )}
+      
+      {/* Cancel Bet Dialog */}
+      <Dialog
+        open={cancelDialogOpen}
+        onClose={handleCloseCancelDialog}
+      >
+        <DialogTitle>Cancel Bet</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to cancel this bet? Your wager amount will be refunded to your balance.
+          </DialogContentText>
+          {betToCancel && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="subtitle2">Bet Details:</Typography>
+              <Typography variant="body2">
+                Game: {betToCancel.game?.homeTeam || 'Unknown'} vs {betToCancel.game?.awayTeam || 'Unknown'}
+              </Typography>
+              <Typography variant="body2">
+                Selection: {formatSelection(betToCancel)}
+              </Typography>
+              <Typography variant="body2">
+                Amount: {formatCurrency(betToCancel.amount)}
+              </Typography>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseCancelDialog} disabled={cancelLoading}>
+            Keep Bet
+          </Button>
+          <Button 
+            onClick={handleCancelBet} 
+            color="error" 
+            variant="contained"
+            disabled={cancelLoading}
+          >
+            {cancelLoading ? <CircularProgress size={24} /> : 'Cancel Bet'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+      
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert 
+          onClose={handleSnackbarClose} 
+          severity={snackbarSeverity}
+          sx={{ width: '100%' }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 };
