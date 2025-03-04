@@ -13,7 +13,8 @@ import {
   Chip,
   CircularProgress,
   TablePagination,
-  Button
+  Button,
+  Alert
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { betAPI } from '../services/api.js';
@@ -36,28 +37,53 @@ const BetHistory = () => {
         
         console.log('Bet response data:', response.data);
         
+        if (!response.data || !Array.isArray(response.data)) {
+          console.error('Invalid bet data format:', response.data);
+          setError('Invalid bet data received from server');
+          setLoading(false);
+          return;
+        }
+        
         // Process the bets to ensure proper data formatting
-        const processedBets = response.data.map(bet => {
-          // Ensure we have a valid bet object
-          if (!bet) return null;
-          
-          return {
-            ...bet,
-            // Ensure potential winnings is a valid number
-            potentialWinnings: isNaN(bet.potentialWinnings) ? 
-              calculatePotentialWinnings(bet.amount, bet.odds) : 
-              bet.potentialWinnings
-          };
-        }).filter(bet => bet !== null); // Remove any null entries
+        const processedBets = response.data
+          .filter(bet => bet) // Filter out null/undefined bets
+          .map(bet => {
+            console.log('Processing bet:', bet);
+            
+            // Ensure we have a valid bet object
+            if (!bet || typeof bet !== 'object') {
+              console.error('Invalid bet object:', bet);
+              return null;
+            }
+            
+            // Ensure bet has required fields
+            if (!bet._id) {
+              console.error('Bet missing ID:', bet);
+              return null;
+            }
+            
+            return {
+              ...bet,
+              // Ensure potential winnings is a valid number
+              potentialWinnings: isNaN(bet.potentialWinnings) ? 
+                calculatePotentialWinnings(bet.amount, bet.odds) : 
+                bet.potentialWinnings,
+              // Ensure amount is a valid number
+              amount: isNaN(bet.amount) ? 0 : bet.amount,
+              // Ensure status is valid
+              status: bet.status || 'pending'
+            };
+          })
+          .filter(bet => bet !== null); // Remove any null entries
         
         console.log('Processed bets:', processedBets);
         
         setBets(processedBets);
         setLoading(false);
       } catch (err) {
-        setError('Failed to load bet history');
-        setLoading(false);
         console.error('Error fetching bets:', err);
+        setError(`Failed to load bet history: ${err.response?.data?.message || err.message}`);
+        setLoading(false);
       }
     };
 
@@ -105,7 +131,13 @@ const BetHistory = () => {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleString();
+    if (!dateString) return '-';
+    try {
+      return new Date(dateString).toLocaleString();
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return '-';
+    }
   };
 
   const formatCurrency = (amount) => {
@@ -132,21 +164,21 @@ const BetHistory = () => {
           if (!bet.game || !bet.game.odds || !bet.game.odds.spread) {
             return bet.betSelection;
           }
-          const spreadValue = bet.game.odds.spread.value || '';
-          const sign = bet.betSelection === bet.game.homeTeam ? '-' : '+';
+          const spreadValue = bet.game?.odds?.spread?.value || '';
+          const sign = bet.betSelection === bet.game?.homeTeam ? '-' : '+';
           return `${bet.betSelection} ${sign}${Math.abs(spreadValue)}`;
         case 'total':
           // Format as "Over 220.5" or "Under 220.5"
           if (!bet.game || !bet.game.odds || !bet.game.odds.total) {
             return `${bet.betSelection.charAt(0).toUpperCase() + bet.betSelection.slice(1)}`;
           }
-          const totalValue = bet.game.odds.total.value || '';
+          const totalValue = bet.game?.odds?.total?.value || '';
           return `${bet.betSelection.charAt(0).toUpperCase() + bet.betSelection.slice(1)} ${totalValue}`;
         default:
           return bet.betSelection;
       }
     } catch (error) {
-      console.error('Error formatting selection:', error);
+      console.error('Error formatting selection:', error, bet);
       return bet.betSelection || '-';
     }
   };
@@ -165,9 +197,16 @@ const BetHistory = () => {
   if (error) {
     return (
       <Container sx={{ mt: 4 }}>
-        <Typography variant="h5" color="error" sx={{ mt: 2 }}>
+        <Alert severity="error" sx={{ mb: 2 }}>
           {error}
-        </Typography>
+        </Alert>
+        <Button 
+          variant="contained" 
+          color="primary"
+          onClick={() => window.location.reload()}
+        >
+          Retry
+        </Button>
       </Container>
     );
   }
@@ -221,8 +260,8 @@ const BetHistory = () => {
                     <TableRow 
                       key={bet._id}
                       hover
-                      onClick={() => navigate(`/games/${bet.game?._id}`)}
-                      sx={{ cursor: 'pointer' }}
+                      onClick={() => bet.game?._id ? navigate(`/games/${bet.game._id}`) : null}
+                      sx={{ cursor: bet.game?._id ? 'pointer' : 'default' }}
                     >
                       <TableCell component="th" scope="row">
                         {bet.game?.homeTeam || 'Unknown'} vs {bet.game?.awayTeam || 'Unknown'}

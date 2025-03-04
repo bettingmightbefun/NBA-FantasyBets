@@ -29,6 +29,7 @@ import { oddsAPI } from '../services/api';
 import { formatDate, formatTime, formatOdds } from '../utils/formatters';
 import { useAuth } from '../context/AuthContext';
 import Betslip from '../components/Betslip';
+import { betAPI } from '../services/api';
 
 // Styled components for the modern design
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
@@ -296,7 +297,7 @@ const BettingPage = () => {
   };
 
   // Handle bet selection
-  const handleBetSelect = (game, team, betType, line, odds) => {
+  const handleBetSelect = (event, game, team, betType, line, odds) => {
     // Prevent navigation when clicking on odds
     event.preventDefault();
     
@@ -319,11 +320,28 @@ const BettingPage = () => {
     // This is needed because the formatOdds function in the Betslip component expects decimal odds
     const decimalOdds = formatOdds(formattedOdds);
     
+    // Map UI bet types to server-expected bet types
+    const serverBetType = betType === 'Spread' ? 'spread' : 
+                          betType === 'Total' ? 'total' : 
+                          betType === 'Moneyline' ? 'moneyline' : betType;
+    
+    // Map UI team names to server-expected selections for totals
+    const serverSelection = betType === 'Total' ? team.toLowerCase() : team;
+    
     setSelectedBet({
       gameId: game._id,
-      team,
+      team: serverSelection,
       matchup,
-      betType,
+      betType: serverBetType,
+      line,
+      odds: decimalOdds,
+    });
+    
+    console.log('Selected bet:', {
+      gameId: game._id,
+      team: serverSelection,
+      matchup,
+      betType: serverBetType,
       line,
       odds: decimalOdds,
     });
@@ -337,16 +355,21 @@ const BettingPage = () => {
   // Handle placing a bet
   const handlePlaceBet = async (wagerAmount, toWinAmount) => {
     try {
-      // Here you would call your API to place the bet
-      console.log('Placing bet:', {
+      // Prepare bet data for API
+      const betData = {
         gameId: selectedBet.gameId,
-        team: selectedBet.team,
-        betType: selectedBet.betType,
-        line: selectedBet.line,
-        odds: selectedBet.odds,
-        wagerAmount,
-        potentialWin: toWinAmount
-      });
+        betType: selectedBet.betType, // Already converted to lowercase in handleBetSelect
+        betSelection: selectedBet.team,
+        amount: parseFloat(wagerAmount),
+        odds: parseFloat(selectedBet.odds)
+      };
+      
+      console.log('Placing bet:', betData);
+      
+      // Call the API to place the bet
+      const response = await betAPI.placeBet(betData);
+      
+      console.log('Bet placed successfully:', response.data);
       
       // Show success message
       setSnackbarMessage('Bet placed successfully!');
@@ -359,7 +382,7 @@ const BettingPage = () => {
       refreshUserData();
     } catch (err) {
       console.error('Error placing bet:', err);
-      setSnackbarMessage('Failed to place bet. Please try again.');
+      setSnackbarMessage(`Failed to place bet: ${err.response?.data?.message || err.message}`);
       setSnackbarOpen(true);
     }
   };
@@ -553,6 +576,7 @@ const BettingPage = () => {
                                 onClick={(e) => {
                                   e.preventDefault();
                                   handleBetSelect(
+                                    e,
                                     game, 
                                     game.awayTeam, 
                                     'Spread', 
@@ -575,6 +599,7 @@ const BettingPage = () => {
                                 onClick={(e) => {
                                   e.preventDefault();
                                   handleBetSelect(
+                                    e,
                                     game, 
                                     game.awayTeam, 
                                     'Moneyline', 
@@ -594,6 +619,7 @@ const BettingPage = () => {
                                 onClick={(e) => {
                                   e.preventDefault();
                                   handleBetSelect(
+                                    e,
                                     game, 
                                     'Over', 
                                     'Total', 
@@ -630,6 +656,7 @@ const BettingPage = () => {
                                 onClick={(e) => {
                                   e.preventDefault();
                                   handleBetSelect(
+                                    e,
                                     game, 
                                     game.homeTeam, 
                                     'Spread', 
@@ -652,6 +679,7 @@ const BettingPage = () => {
                                 onClick={(e) => {
                                   e.preventDefault();
                                   handleBetSelect(
+                                    e,
                                     game, 
                                     game.homeTeam, 
                                     'Moneyline', 
@@ -671,6 +699,7 @@ const BettingPage = () => {
                                 onClick={(e) => {
                                   e.preventDefault();
                                   handleBetSelect(
+                                    e,
                                     game, 
                                     'Under', 
                                     'Total', 
