@@ -29,6 +29,7 @@ import {
   Leaderboard as LeaderboardIcon,
   Person as ProfileIcon,
   Logout as LogoutIcon,
+  AdminPanelSettings as AdminIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 
@@ -75,6 +76,15 @@ const Layout = ({ children }) => {
     { text: 'Bet History', icon: <HistoryIcon />, path: '/history' },
     { text: 'Leaderboard', icon: <LeaderboardIcon />, path: '/leaderboard' },
   ];
+
+  // Add Admin Panel to menu items if user is admin
+  if (user && user.isAdmin) {
+    menuItems.push({ 
+      text: 'Admin Panel', 
+      icon: <AdminIcon />, 
+      path: '/admin' 
+    });
+  }
   
   const drawer = (
     <div>

@@ -16,6 +16,7 @@ import GameDetails from './pages/GameDetails';
 import BetHistory from './pages/BetHistory';
 import Leaderboard from './pages/Leaderboard';
 import Profile from './pages/Profile';
+import AdminPanel from './pages/AdminPanel';
 import NotFound from './pages/NotFound';
 
 // Protected Route Component
@@ -42,6 +43,35 @@ const ProtectedRoute = ({ children }) => {
   if (!user) {
     console.log('No user found, redirecting to login');
     return <Navigate to="/login" />;
+  }
+
+  return children;
+};
+
+// Admin Route Component
+const AdminRoute = ({ children }) => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: 'column',
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh' 
+      }}>
+        <CircularProgress size={40} />
+        <Typography variant="body1" sx={{ mt: 2 }}>
+          Loading...
+        </Typography>
+      </Box>
+    );
+  }
+
+  if (!user || !user.isAdmin) {
+    console.log('Not an admin, redirecting to dashboard');
+    return <Navigate to="/dashboard" />;
   }
 
   return children;
@@ -104,6 +134,15 @@ const App = () => {
             <Profile />
           </Layout>
         </ProtectedRoute>
+      } />
+      
+      {/* Admin Routes */}
+      <Route path="/admin" element={
+        <AdminRoute>
+          <Layout>
+            <AdminPanel />
+          </Layout>
+        </AdminRoute>
       } />
 
       {/* 404 Route */}
