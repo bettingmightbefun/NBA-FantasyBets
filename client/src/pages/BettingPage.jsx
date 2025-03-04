@@ -305,7 +305,7 @@ const BettingPage = () => {
     // Format the odds value for display
     let formattedOdds = odds;
     if (betType === 'Spread') {
-      formattedOdds = betType === 'Spread' && team === game.awayTeam ? 
+      formattedOdds = team === game.awayTeam ? 
         game.odds?.spread?.awayOdds : game.odds?.spread?.homeOdds;
     } else if (betType === 'Total') {
       formattedOdds = team === 'Over' ? 
@@ -315,13 +315,16 @@ const BettingPage = () => {
         game.odds?.moneyline?.away : game.odds?.moneyline?.home;
     }
     
+    // Ensure odds are in decimal format
+    const decimalOdds = parseFloat(formattedOdds).toFixed(2);
+    
     setSelectedBet({
       gameId: game._id,
       team,
       matchup,
       betType,
       line,
-      odds: formattedOdds,
+      odds: decimalOdds,
     });
   };
 
