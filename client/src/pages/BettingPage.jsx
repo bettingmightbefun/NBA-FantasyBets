@@ -56,11 +56,14 @@ const StyledTableRow = styled(TableRow)(() => ({
 
 const OddsValue = styled(Box)(({ theme }) => ({
   textAlign: 'center',
-  padding: '8px 0',
-  borderRadius: 0,
+  padding: '8px',
+  borderRadius: '4px',
   width: '100%',
+  backgroundColor: '#2A2A2A',
+  border: '1px solid #3A3A3A',
   '&:hover': {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(25, 118, 210, 0.12)',
+    borderColor: theme.palette.primary.main,
   },
 }));
 
@@ -94,6 +97,12 @@ const MoreWagersLink = styled(Button)(() => ({
     backgroundColor: 'transparent',
     textDecoration: 'underline',
   },
+}));
+
+const GameTime = styled(Typography)(({ theme }) => ({
+  color: 'rgba(255, 255, 255, 0.7)',
+  fontSize: '0.75rem',
+  marginTop: '4px',
 }));
 
 // Team color mapping
@@ -445,7 +454,6 @@ const BettingPage = () => {
                                 </TeamLogo>
                                 <Box>
                                   <Typography variant="body2" color="white">{game.awayTeam}</Typography>
-                                  <Typography variant="caption" color="rgba(255, 255, 255, 0.5)">@</Typography>
                                 </Box>
                               </Box>
                             </StyledTableCell>
@@ -454,7 +462,7 @@ const BettingPage = () => {
                                 <Typography variant="body2" color="white">
                                   {game.odds?.spread?.away > 0 ? '+' : ''}{game.odds?.spread?.away}
                                 </Typography>
-                                <Typography variant="caption" color="rgba(255, 255, 255, 0.5)">
+                                <Typography variant="caption" color="rgba(255, 255, 255, 0.7)">
                                   {formatOdds(game.odds?.spread?.awayOdds)}
                                 </Typography>
                               </OddsValue>
@@ -471,7 +479,7 @@ const BettingPage = () => {
                                 <Typography variant="body2" color="white">
                                   O {game.odds?.total?.over}
                                 </Typography>
-                                <Typography variant="caption" color="rgba(255, 255, 255, 0.5)">
+                                <Typography variant="caption" color="rgba(255, 255, 255, 0.7)">
                                   {formatOdds(game.odds?.total?.overOdds)}
                                 </Typography>
                               </OddsValue>
@@ -489,11 +497,8 @@ const BettingPage = () => {
                                 <TeamLogo bgcolor={getTeamColor(game.homeTeam)}>
                                   {getTeamAbbreviation(game.homeTeam)}
                                 </TeamLogo>
-                                <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                                <Box>
                                   <Typography variant="body2" color="white">{game.homeTeam}</Typography>
-                                  <Typography variant="caption" color="rgba(255, 255, 255, 0.5)">
-                                    {getGameTime(game.startTime)} ET
-                                  </Typography>
                                 </Box>
                               </Box>
                             </StyledTableCell>
@@ -502,7 +507,7 @@ const BettingPage = () => {
                                 <Typography variant="body2" color="white">
                                   {game.odds?.spread?.home > 0 ? '+' : ''}{game.odds?.spread?.home}
                                 </Typography>
-                                <Typography variant="caption" color="rgba(255, 255, 255, 0.5)">
+                                <Typography variant="caption" color="rgba(255, 255, 255, 0.7)">
                                   {formatOdds(game.odds?.spread?.homeOdds)}
                                 </Typography>
                               </OddsValue>
@@ -519,24 +524,29 @@ const BettingPage = () => {
                                 <Typography variant="body2" color="white">
                                   U {game.odds?.total?.under}
                                 </Typography>
-                                <Typography variant="caption" color="rgba(255, 255, 255, 0.5)">
+                                <Typography variant="caption" color="rgba(255, 255, 255, 0.7)">
                                   {formatOdds(game.odds?.total?.underOdds)}
                                 </Typography>
                               </OddsValue>
                             </StyledTableCell>
                           </StyledTableRow>
                           
-                          {/* More wagers row */}
+                          {/* Game Time Row */}
                           <StyledTableRow>
-                            <StyledTableCell colSpan={4} sx={{ p: 0, borderBottom: index === groupedGames[date].length - 1 ? 'none' : '1px solid rgba(81, 81, 81, 0.5)' }}>
-                              <MoreWagersLink 
-                                component={RouterLink}
-                                to={`/games/${game._id}`}
-                                endIcon={<ArrowIcon fontSize="small" />}
-                                size="small"
-                              >
-                                More wagers
-                              </MoreWagersLink>
+                            <StyledTableCell colSpan={4} sx={{ p: 0, borderBottom: 'none' }}>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 2, py: 1 }}>
+                                <GameTime>
+                                  {getGameTime(game.startTime)} ET
+                                </GameTime>
+                                <MoreWagersLink 
+                                  component={RouterLink}
+                                  to={`/games/${game._id}`}
+                                  endIcon={<ArrowIcon fontSize="small" />}
+                                  size="small"
+                                >
+                                  More wagers
+                                </MoreWagersLink>
+                              </Box>
                             </StyledTableCell>
                           </StyledTableRow>
                         </React.Fragment>
