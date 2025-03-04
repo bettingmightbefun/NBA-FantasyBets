@@ -34,14 +34,23 @@ const BetHistory = () => {
         setLoading(true);
         const response = await betAPI.getUserBets();
         
+        console.log('Bet response data:', response.data);
+        
         // Process the bets to ensure proper data formatting
-        const processedBets = response.data.map(bet => ({
-          ...bet,
-          // Ensure potential winnings is a valid number
-          potentialWinnings: isNaN(bet.potentialWinnings) ? 
-            calculatePotentialWinnings(bet.amount, bet.odds) : 
-            bet.potentialWinnings
-        }));
+        const processedBets = response.data.map(bet => {
+          // Ensure we have a valid bet object
+          if (!bet) return null;
+          
+          return {
+            ...bet,
+            // Ensure potential winnings is a valid number
+            potentialWinnings: isNaN(bet.potentialWinnings) ? 
+              calculatePotentialWinnings(bet.amount, bet.odds) : 
+              bet.potentialWinnings
+          };
+        }).filter(bet => bet !== null); // Remove any null entries
+        
+        console.log('Processed bets:', processedBets);
         
         setBets(processedBets);
         setLoading(false);
@@ -114,20 +123,31 @@ const BetHistory = () => {
   const formatSelection = (bet) => {
     if (!bet.betSelection) return '-';
     
-    switch (bet.betType) {
-      case 'moneyline':
-        return bet.betSelection; // Team name
-      case 'spread':
-        // Format as "Team -3.5" or "Team +3.5"
-        const spreadValue = bet.game?.odds?.spread?.value || '';
-        const sign = bet.betSelection === bet.game?.homeTeam ? '-' : '+';
-        return `${bet.betSelection} ${sign}${Math.abs(spreadValue)}`;
-      case 'total':
-        // Format as "Over 220.5" or "Under 220.5"
-        const totalValue = bet.game?.odds?.total?.value || '';
-        return `${bet.betSelection.charAt(0).toUpperCase() + bet.betSelection.slice(1)} ${totalValue}`;
-      default:
-        return bet.betSelection;
+    try {
+      switch (bet.betType) {
+        case 'moneyline':
+          return bet.betSelection; // Team name
+        case 'spread':
+          // Format as "Team -3.5" or "Team +3.5"
+          if (!bet.game || !bet.game.odds || !bet.game.odds.spread) {
+            return bet.betSelection;
+          }
+          const spreadValue = bet.game.odds.spread.value || '';
+          const sign = bet.betSelection === bet.game.homeTeam ? '-' : '+';
+          return `${bet.betSelection} ${sign}${Math.abs(spreadValue)}`;
+        case 'total':
+          // Format as "Over 220.5" or "Under 220.5"
+          if (!bet.game || !bet.game.odds || !bet.game.odds.total) {
+            return `${bet.betSelection.charAt(0).toUpperCase() + bet.betSelection.slice(1)}`;
+          }
+          const totalValue = bet.game.odds.total.value || '';
+          return `${bet.betSelection.charAt(0).toUpperCase() + bet.betSelection.slice(1)} ${totalValue}`;
+        default:
+          return bet.betSelection;
+      }
+    } catch (error) {
+      console.error('Error formatting selection:', error);
+      return bet.betSelection || '-';
     }
   };
 
@@ -201,14 +221,14 @@ const BetHistory = () => {
                     <TableRow 
                       key={bet._id}
                       hover
-                      onClick={() => navigate(`/games/${bet.game._id}`)}
+                      onClick={() => navigate(`/games/${bet.game?._id}`)}
                       sx={{ cursor: 'pointer' }}
                     >
                       <TableCell component="th" scope="row">
-                        {bet.game.homeTeam} vs {bet.game.awayTeam}
+                        {bet.game?.homeTeam || 'Unknown'} vs {bet.game?.awayTeam || 'Unknown'}
                       </TableCell>
                       <TableCell>
-                        {bet.betType.charAt(0).toUpperCase() + bet.betType.slice(1)}
+                        {bet.betType ? bet.betType.charAt(0).toUpperCase() + bet.betType.slice(1) : '-'}
                       </TableCell>
                       <TableCell>{formatSelection(bet)}</TableCell>
                       <TableCell align="right">{formatCurrency(bet.amount)}</TableCell>
