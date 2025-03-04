@@ -89,13 +89,12 @@ const LiveChip = styled(Chip)({
   marginRight: '8px',
 });
 
-const CashOutChip = styled(Chip)({
-  backgroundColor: 'white',
-  color: 'black',
+const OddsText = styled(Typography)(({ theme }) => ({
+  color: 'white',
   fontWeight: 'bold',
-  fontSize: '0.75rem',
-  height: '24px',
-});
+  fontSize: '1.25rem',
+  textAlign: 'right',
+}));
 
 const Betslip = ({ bet, onRemove, onPlaceBet }) => {
   const [wagerAmount, setWagerAmount] = useState('');
@@ -131,10 +130,10 @@ const Betslip = ({ bet, onRemove, onPlaceBet }) => {
 
   // Format the line display
   const getLineDisplay = () => {
-    if (bet.betType === 'Moneyline') {
-      return formatOdds(bet.odds);
-    } else if (bet.line) {
+    if (bet.betType === 'Spread') {
       return (bet.line > 0 ? '+' : '') + bet.line;
+    } else if (bet.betType === 'Total') {
+      return bet.team === 'Over' ? 'O ' + bet.line : 'U ' + bet.line;
     }
     return '';
   };
@@ -172,10 +171,14 @@ const Betslip = ({ bet, onRemove, onPlaceBet }) => {
             </Box>
             
             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-              <Typography variant="h6" fontWeight="bold" sx={{ mb: 0.5 }}>
-                {getLineDisplay()}
-              </Typography>
-              <CashOutChip label="CASH OUT" size="small" />
+              {(bet.betType === 'Spread' || bet.betType === 'Total') && (
+                <Typography variant="h6" fontWeight="bold" sx={{ mb: 0.5 }}>
+                  {getLineDisplay()}
+                </Typography>
+              )}
+              <OddsText>
+                {formatOdds(bet.odds)}
+              </OddsText>
             </Box>
           </Box>
         </Box>
