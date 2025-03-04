@@ -33,7 +33,17 @@ const BetHistory = () => {
       try {
         setLoading(true);
         const response = await betAPI.getUserBets();
-        setBets(response.data);
+        
+        // Process the bets to ensure proper data formatting
+        const processedBets = response.data.map(bet => ({
+          ...bet,
+          // Ensure potential winnings is a valid number
+          potentialWinnings: isNaN(bet.potentialWinnings) ? 
+            calculatePotentialWinnings(bet.amount, bet.odds) : 
+            bet.potentialWinnings
+        }));
+        
+        setBets(processedBets);
         setLoading(false);
       } catch (err) {
         setError('Failed to load bet history');
@@ -44,6 +54,19 @@ const BetHistory = () => {
 
     fetchBets();
   }, []);
+
+  // Calculate potential winnings based on amount and odds
+  const calculatePotentialWinnings = (amount, odds) => {
+    if (!amount || !odds) return 0;
+    
+    if (odds > 0) {
+      // Positive odds (e.g. +150)
+      return amount * (odds / 100);
+    } else {
+      // Negative odds (e.g. -200)
+      return amount * (100 / Math.abs(odds));
+    }
+  };
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -61,10 +84,15 @@ const BetHistory = () => {
       case 'lost':
         return 'error';
       case 'pending':
-        return 'warning';
+        return 'error'; // Changed from 'warning' to 'error' for red color
       default:
         return 'default';
     }
+  };
+
+  const getStatusLabel = (status) => {
+    // Change 'pending' to 'LIVE'
+    return status === 'pending' ? 'LIVE' : status;
   };
 
   const formatDate = (dateString) => {
@@ -72,11 +100,35 @@ const BetHistory = () => {
   };
 
   const formatCurrency = (amount) => {
+    if (isNaN(amount) || amount === null || amount === undefined) {
+      return '$0.00';
+    }
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
       minimumFractionDigits: 2
     }).format(amount);
+  };
+
+  // Format the selection text based on bet type and selection
+  const formatSelection = (bet) => {
+    if (!bet.betSelection) return '-';
+    
+    switch (bet.betType) {
+      case 'moneyline':
+        return bet.betSelection; // Team name
+      case 'spread':
+        // Format as "Team -3.5" or "Team +3.5"
+        const spreadValue = bet.game?.odds?.spread?.value || '';
+        const sign = bet.betSelection === bet.game?.homeTeam ? '-' : '+';
+        return `${bet.betSelection} ${sign}${Math.abs(spreadValue)}`;
+      case 'total':
+        // Format as "Over 220.5" or "Under 220.5"
+        const totalValue = bet.game?.odds?.total?.value || '';
+        return `${bet.betSelection.charAt(0).toUpperCase() + bet.betSelection.slice(1)} ${totalValue}`;
+      default:
+        return bet.betSelection;
+    }
   };
 
   if (loading) {
@@ -158,12 +210,12 @@ const BetHistory = () => {
                       <TableCell>
                         {bet.betType.charAt(0).toUpperCase() + bet.betType.slice(1)}
                       </TableCell>
-                      <TableCell>{bet.betSelection}</TableCell>
+                      <TableCell>{formatSelection(bet)}</TableCell>
                       <TableCell align="right">{formatCurrency(bet.amount)}</TableCell>
                       <TableCell align="right">{formatCurrency(bet.potentialWinnings)}</TableCell>
                       <TableCell>
                         <Chip 
-                          label={bet.status} 
+                          label={getStatusLabel(bet.status)} 
                           color={getStatusColor(bet.status)} 
                           size="small" 
                         />
