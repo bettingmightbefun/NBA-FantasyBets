@@ -104,10 +104,10 @@ const Betslip = ({ bet, onRemove, onPlaceBet }) => {
     const amount = e.target.value;
     setWagerAmount(amount);
     
-    // Calculate potential winnings based on odds
+    // Calculate potential winnings based on odds (net profit, not total return)
     if (amount && !isNaN(amount) && bet.odds) {
       const decimalOdds = parseFloat(bet.odds);
-      const potentialWin = (parseFloat(amount) * decimalOdds).toFixed(2);
+      const potentialWin = (parseFloat(amount) * (decimalOdds - 1)).toFixed(2);
       setToWinAmount(potentialWin);
     } else {
       setToWinAmount('');
@@ -121,7 +121,7 @@ const Betslip = ({ bet, onRemove, onPlaceBet }) => {
     // Calculate wager amount based on desired winnings
     if (amount && !isNaN(amount) && bet.odds) {
       const decimalOdds = parseFloat(bet.odds);
-      const wagerNeeded = (parseFloat(amount) / decimalOdds).toFixed(2);
+      const wagerNeeded = (parseFloat(amount) / (decimalOdds - 1)).toFixed(2);
       setWagerAmount(wagerNeeded);
     } else {
       setWagerAmount('');
