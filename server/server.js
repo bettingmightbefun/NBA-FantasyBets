@@ -12,7 +12,7 @@ const oddsRoutes = require('./routes/odds');
 
 // Import services
 const { updateOdds } = require('./services/oddsService');
-const { updateGameStatuses } = require('./services/gameResultsService');
+const { updateGameResults } = require('./services/gameResultsService');
 
 // Load environment variables
 dotenv.config();
@@ -60,16 +60,15 @@ app.use('/api/users', userRoutes);
 app.use('/api/bets', betRoutes);
 app.use('/api/odds', oddsRoutes);
 
-// Run initial updates when server starts
-console.log('Running initial updates on server start...');
-
-// Update odds
+// Run odds update immediately when server starts
+console.log('Running initial odds update on server start...');
 updateOdds()
   .then(() => console.log('Initial odds update completed successfully'))
   .catch(error => console.error('Error during initial odds update:', error));
 
-// Update game results and settle bets
-updateGameStatuses()
+// Run game results update immediately when server starts
+console.log('Running initial game results update on server start...');
+updateGameResults()
   .then(() => console.log('Initial game results update completed successfully'))
   .catch(error => console.error('Error during initial game results update:', error));
 
@@ -88,7 +87,7 @@ cron.schedule('*/30 * * * *', async () => {
 cron.schedule('*/15 * * * *', async () => {
   console.log('Running scheduled game results update');
   try {
-    await updateGameStatuses();
+    await updateGameResults();
     console.log('Game results updated successfully');
   } catch (error) {
     console.error('Error updating game results:', error);

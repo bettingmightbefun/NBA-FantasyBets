@@ -4,215 +4,233 @@ const Bet = require('../models/Bet');
 const User = require('../models/User');
 
 /**
- * Fetches game results from the NBA API
- * @param {Date} date - The date to fetch results for (defaults to today)
- * @returns {Promise<Array>} - Array of game results
+ * Fetches game results from the NBA API and updates game statuses and bet outcomes
  */
-const fetchGameResults = async (date = new Date()) => {
+async function updateGameResults() {
   try {
-    // Format date as YYYYMMDD for NBA API
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const dateString = `${year}${month}${day}`;
+    console.log('Starting game results update process...');
     
-    console.log(`Fetching NBA game results for date: ${dateString}`);
+    // Find games that are scheduled or in progress
+    const pendingGames = await Game.find({
+      status: { $in: ['scheduled', 'in_progress'] },
+      startTime: { $lt: new Date() } // Only check games that have started
+    });
     
-    // Call the NBA API scoreboard endpoint
-    const response = await axios.get(`https://data.nba.net/prod/v1/${dateString}/scoreboard.json`);
-    
-    if (!response.data || !response.data.games || !Array.isArray(response.data.games)) {
-      console.log('No game data returned from NBA API');
-      return [];
-    }
-    
-    const games = response.data.games;
-    console.log(`Found ${games.length} games for ${dateString}`);
-    
-    return games.map(game => ({
-      gameId: `nba-${game.gameId}`,
-      homeTeam: game.hTeam.triCode,
-      homeScore: parseInt(game.hTeam.score),
-      awayTeam: game.vTeam.triCode,
-      awayScore: parseInt(game.vTeam.score),
-      status: game.statusNum, // 1: scheduled, 2: in progress, 3: finished
-      clock: game.clock,
-      period: game.period.current,
-      startTimeUTC: game.startTimeUTC,
-      endTimeUTC: game.endTimeUTC
-    }));
-  } catch (error) {
-    console.error('Error fetching game results from NBA API:', error.message);
-    return [];
-  }
-};
-
-/**
- * Updates game statuses in the database based on NBA API results
- */
-const updateGameStatuses = async () => {
-  try {
-    console.log('Starting game status update process...');
-    
-    // Get today's date
-    const today = new Date();
-    
-    // Get yesterday's date (to catch overnight games)
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    
-    // Fetch results for today and yesterday
-    const todayResults = await fetchGameResults(today);
-    const yesterdayResults = await fetchGameResults(yesterday);
-    
-    // Combine results
-    const allResults = [...yesterdayResults, ...todayResults];
-    
-    if (allResults.length === 0) {
-      console.log('No game results found to update');
+    if (pendingGames.length === 0) {
+      console.log('No pending games to update');
       return;
     }
     
-    console.log(`Processing ${allResults.length} game results`);
+    console.log(`Found ${pendingGames.length} pending games to check for results`);
     
-    // Update each game in our database
-    for (const result of allResults) {
-      // Find the game in our database
-      const game = await Game.findOne({ gameId: result.gameId });
+    // Group games by date to minimize API calls
+    const gamesByDate = {};
+    pendingGames.forEach(game => {
+      const gameDate = new Date(game.startTime);
+      const year = gameDate.getFullYear();
+      const month = String(gameDate.getMonth() + 1).padStart(2, '0');
+      const day = String(gameDate.getDate()).padStart(2, '0');
+      const dateStr = `${year}${month}${day}`;
       
-      if (!game) {
-        console.log(`Game not found in database: ${result.gameId}`);
-        continue;
+      if (!gamesByDate[dateStr]) {
+        gamesByDate[dateStr] = [];
       }
-      
-      // Update game status based on NBA API status
-      if (result.status === 3) { // Game is finished
-        console.log(`Updating finished game: ${game.homeTeam} vs ${game.awayTeam}`);
-        
-        // Update game with final score and status
-        game.status = 'finished';
-        game.homeScore = result.homeScore;
-        game.awayScore = result.awayScore;
-        game.lastUpdated = new Date();
-        
-        await game.save();
-        console.log(`Game updated: ${game.homeTeam} ${game.homeScore} - ${game.awayScore} ${game.awayTeam}`);
-        
-        // Settle bets for this game
-        await settleBetsForGame(game);
-      } else if (result.status === 2 && game.status !== 'in_progress') { // Game is in progress
-        console.log(`Updating in-progress game: ${game.homeTeam} vs ${game.awayTeam}`);
-        
-        // Update game with current score and status
-        game.status = 'in_progress';
-        game.homeScore = result.homeScore;
-        game.awayScore = result.awayScore;
-        game.lastUpdated = new Date();
-        
-        await game.save();
-      }
-    }
-    
-    console.log('Game status update completed');
-  } catch (error) {
-    console.error('Error updating game statuses:', error);
-  }
-};
-
-/**
- * Settles all bets for a finished game
- * @param {Object} game - The finished game object
- */
-const settleBetsForGame = async (game) => {
-  try {
-    console.log(`Settling bets for game: ${game.homeTeam} vs ${game.awayTeam}`);
-    
-    // Find all pending bets for this game
-    const pendingBets = await Bet.find({ 
-      gameId: game.gameId,
-      status: { $in: ['pending', 'live'] }
+      gamesByDate[dateStr].push(game);
     });
     
-    console.log(`Found ${pendingBets.length} pending bets to settle`);
-    
-    for (const bet of pendingBets) {
-      // Determine if bet is a win or loss
-      let isWin = false;
+    // Process each date
+    for (const [dateStr, games] of Object.entries(gamesByDate)) {
+      console.log(`Checking results for ${games.length} games on ${dateStr}`);
       
-      if (bet.betType === 'moneyline') {
-        if (bet.pick === 'home') {
-          isWin = game.homeScore > game.awayScore;
-        } else {
-          isWin = game.awayScore > game.homeScore;
-        }
-      } else if (bet.betType === 'spread') {
-        if (bet.pick === 'home') {
-          isWin = (game.homeScore + bet.line) > game.awayScore;
-        } else {
-          isWin = (game.awayScore + bet.line) > game.homeScore;
-        }
-      } else if (bet.betType === 'total') {
-        const totalScore = game.homeScore + game.awayScore;
-        if (bet.pick === 'over') {
-          isWin = totalScore > bet.line;
-        } else {
-          isWin = totalScore < bet.line;
-        }
-      }
-      
-      // Update bet status
-      bet.status = isWin ? 'won' : 'lost';
-      bet.settledAt = new Date();
-      
-      // Calculate payout if bet won
-      if (isWin) {
-        const payout = bet.amount * bet.odds;
+      try {
+        // Fetch results from NBA API
+        const response = await axios.get(`https://data.nba.net/prod/v1/${dateStr}/scoreboard.json`);
+        const nbaGames = response.data.games;
         
-        // Update user balance
-        const user = await User.findById(bet.userId);
-        if (user) {
-          user.balance += payout;
-          await user.save();
-          console.log(`User ${user.username} won ${payout} on bet ${bet._id}`);
+        console.log(`NBA API returned ${nbaGames.length} games for ${dateStr}`);
+        
+        // Process each game
+        for (const game of games) {
+          // Find matching NBA game
+          const nbaGame = nbaGames.find(nbaGame => {
+            // Match by team names (case insensitive)
+            const homeTeamMatch = nbaGame.hTeam.triCode.toLowerCase() === game.homeTeam.toLowerCase() ||
+                                 nbaGame.hTeam.fullName.toLowerCase().includes(game.homeTeam.toLowerCase());
+            const awayTeamMatch = nbaGame.vTeam.triCode.toLowerCase() === game.awayTeam.toLowerCase() ||
+                                 nbaGame.vTeam.fullName.toLowerCase().includes(game.awayTeam.toLowerCase());
+            return homeTeamMatch && awayTeamMatch;
+          });
+          
+          if (!nbaGame) {
+            console.log(`Could not find matching NBA game for ${game.awayTeam} @ ${game.homeTeam}`);
+            continue;
+          }
+          
+          // Check if game is finished
+          if (nbaGame.statusNum === 3) { // 3 = finished
+            console.log(`Game ${game.awayTeam} @ ${game.homeTeam} is finished`);
+            
+            // Update game status
+            game.status = 'finished';
+            
+            // Get scores
+            const homeScore = parseInt(nbaGame.hTeam.score);
+            const awayScore = parseInt(nbaGame.vTeam.score);
+            
+            // Update game with scores
+            game.homeScore = homeScore;
+            game.awayScore = awayScore;
+            
+            // Determine winner
+            let winner = null;
+            if (homeScore > awayScore) {
+              winner = 'home';
+              console.log(`${game.homeTeam} (home) won`);
+            } else if (awayScore > homeScore) {
+              winner = 'away';
+              console.log(`${game.awayTeam} (away) won`);
+            } else {
+              winner = 'tie';
+              console.log('Game ended in a tie (unusual for NBA)');
+            }
+            
+            // Save game
+            await game.save();
+            
+            // Update bets for this game
+            await updateBetsForGame(game._id, winner, homeScore, awayScore);
+          } else if (nbaGame.statusNum === 2) { // 2 = in progress
+            console.log(`Game ${game.awayTeam} @ ${game.homeTeam} is in progress`);
+            
+            // Update game status
+            game.status = 'in_progress';
+            await game.save();
+          }
         }
+      } catch (error) {
+        console.error(`Error fetching results for date ${dateStr}:`, error.message);
       }
-      
-      await bet.save();
-      console.log(`Bet ${bet._id} settled as ${bet.status}`);
     }
     
-    console.log(`All bets settled for game: ${game.homeTeam} vs ${game.awayTeam}`);
+    console.log('Game results update process completed');
   } catch (error) {
-    console.error(`Error settling bets for game ${game.gameId}:`, error);
+    console.error('Error updating game results:', error.message);
   }
-};
+}
 
 /**
- * Manually settles all pending bets for games that have finished
- * This can be used to fix any bets that weren't automatically settled
+ * Updates bets for a specific game based on the result
  */
-const manuallySettleAllPendingBets = async () => {
+async function updateBetsForGame(gameId, winner, homeScore, awayScore) {
   try {
-    console.log('Starting manual settlement of all pending bets...');
+    // Find all bets for this game
+    const bets = await Bet.find({ game: gameId, status: 'pending' });
     
-    // Find all finished games
-    const finishedGames = await Game.find({ status: 'finished' });
-    console.log(`Found ${finishedGames.length} finished games`);
+    console.log(`Found ${bets.length} pending bets to settle for game ${gameId}`);
     
-    // Settle bets for each finished game
-    for (const game of finishedGames) {
-      await settleBetsForGame(game);
+    for (const bet of bets) {
+      let isWin = false;
+      let payout = 0;
+      
+      // Determine if bet is a win based on bet type
+      if (bet.betType === 'moneyline') {
+        // Moneyline bet - straight win/loss
+        isWin = (bet.pick === 'home' && winner === 'home') || 
+                (bet.pick === 'away' && winner === 'away');
+      } else if (bet.betType === 'spread') {
+        // Spread bet
+        const spreadValue = bet.pick === 'home' ? bet.spreadValue : -bet.spreadValue;
+        const homeScoreAdjusted = homeScore + spreadValue;
+        
+        isWin = (bet.pick === 'home' && homeScoreAdjusted > awayScore) || 
+                (bet.pick === 'away' && homeScoreAdjusted < awayScore);
+                
+        // Handle push (tie after spread)
+        if (homeScoreAdjusted === awayScore) {
+          bet.status = 'push';
+          bet.result = 'push';
+          payout = bet.amount; // Return the original stake
+          
+          // Update user balance
+          const user = await User.findById(bet.user);
+          user.balance += payout;
+          await user.save();
+          
+          console.log(`Bet ${bet._id} resulted in a push, returning ${payout} to user ${bet.user}`);
+          
+          // Save bet
+          bet.payout = payout;
+          await bet.save();
+          continue;
+        }
+      } else if (bet.betType === 'total') {
+        // Total (over/under) bet
+        const totalScore = homeScore + awayScore;
+        
+        isWin = (bet.pick === 'over' && totalScore > bet.totalValue) || 
+                (bet.pick === 'under' && totalScore < bet.totalValue);
+                
+        // Handle push (exact total)
+        if (totalScore === bet.totalValue) {
+          bet.status = 'push';
+          bet.result = 'push';
+          payout = bet.amount; // Return the original stake
+          
+          // Update user balance
+          const user = await User.findById(bet.user);
+          user.balance += payout;
+          await user.save();
+          
+          console.log(`Bet ${bet._id} resulted in a push, returning ${payout} to user ${bet.user}`);
+          
+          // Save bet
+          bet.payout = payout;
+          await bet.save();
+          continue;
+        }
+      }
+      
+      // Update bet status and result
+      bet.status = 'settled';
+      bet.result = isWin ? 'win' : 'loss';
+      
+      // Calculate payout for winning bets
+      if (isWin) {
+        // Calculate payout based on odds
+        const odds = bet.odds;
+        
+        if (odds > 0) {
+          // Positive odds (e.g. +150)
+          payout = bet.amount + (bet.amount * (odds / 100));
+        } else {
+          // Negative odds (e.g. -110)
+          payout = bet.amount + (bet.amount * (100 / Math.abs(odds)));
+        }
+        
+        // Round to 2 decimal places
+        payout = Math.round(payout * 100) / 100;
+        
+        // Update user balance
+        const user = await User.findById(bet.user);
+        user.balance += payout;
+        await user.save();
+        
+        console.log(`User ${bet.user} won bet ${bet._id}, paid out ${payout}`);
+      } else {
+        console.log(`User ${bet.user} lost bet ${bet._id}`);
+      }
+      
+      // Save bet
+      bet.payout = isWin ? payout : 0;
+      await bet.save();
     }
     
-    console.log('Manual settlement completed');
+    console.log(`Finished updating bets for game ${gameId}`);
   } catch (error) {
-    console.error('Error in manual settlement:', error);
+    console.error(`Error updating bets for game ${gameId}:`, error.message);
   }
-};
+}
 
 module.exports = {
-  fetchGameResults,
-  updateGameStatuses,
-  settleBetsForGame,
-  manuallySettleAllPendingBets
+  updateGameResults
 }; 
