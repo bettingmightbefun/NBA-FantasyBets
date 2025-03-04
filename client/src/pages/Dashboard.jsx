@@ -287,7 +287,7 @@ const Dashboard = () => {
               upcomingGames.map((game) => (
                 <Box key={game._id} sx={{ mb: 2, p: 2, border: 1, borderColor: 'divider', borderRadius: 1 }}>
                   <Grid container alignItems="center">
-                    <Grid item xs={12} sm={5}>
+                    <Grid item xs={12} sm={8}>
                       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                         <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
                           {game.homeTeam} vs {game.awayTeam}
@@ -297,27 +297,7 @@ const Dashboard = () => {
                         </Typography>
                       </Box>
                     </Grid>
-                    <Grid item xs={12} sm={5}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-around', mt: { xs: 1, sm: 0 } }}>
-                        <Box sx={{ textAlign: 'center' }}>
-                          <Typography variant="caption" color="text.secondary">
-                            Moneyline
-                          </Typography>
-                          <Typography variant="body2">
-                            {formatOdds(game.odds?.moneyline?.home)} / {formatOdds(game.odds?.moneyline?.away)}
-                          </Typography>
-                        </Box>
-                        <Box sx={{ textAlign: 'center' }}>
-                          <Typography variant="caption" color="text.secondary">
-                            Spread
-                          </Typography>
-                          <Typography variant="body2">
-                            {game.odds?.spread?.points} ({formatOdds(game.odds?.spread?.home)})
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-                    <Grid item xs={12} sm={2} sx={{ textAlign: 'center', mt: { xs: 2, sm: 0 } }}>
+                    <Grid item xs={12} sm={4} sx={{ textAlign: 'center', mt: { xs: 2, sm: 0 } }}>
                       <Button
                         component={RouterLink}
                         to={`/betting/${game._id}`}
