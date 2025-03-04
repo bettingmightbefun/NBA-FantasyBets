@@ -44,14 +44,10 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
 }));
 
 const StyledTableRow = styled(TableRow)(() => ({
-  '&:hover': {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    cursor: 'pointer',
-  },
+  textDecoration: 'none',
   '&.divider': {
     borderBottom: '8px solid #121212',
   },
-  textDecoration: 'none',
 }));
 
 const OddsValue = styled(Box)(({ theme }) => ({
@@ -59,11 +55,17 @@ const OddsValue = styled(Box)(({ theme }) => ({
   padding: '8px',
   borderRadius: '4px',
   width: '100%',
+  minWidth: '80px',
+  height: '60px',
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'center',
   backgroundColor: '#2A2A2A',
   border: '1px solid #3A3A3A',
   '&:hover': {
     backgroundColor: 'rgba(25, 118, 210, 0.12)',
     borderColor: theme.palette.primary.main,
+    cursor: 'pointer',
   },
 }));
 
@@ -434,7 +436,7 @@ const BettingPage = () => {
                       <TableRow>
                         <StyledTableCell className="header" width="40%">TEAMS</StyledTableCell>
                         <StyledTableCell className="header" align="center" width="20%">SPREAD</StyledTableCell>
-                        <StyledTableCell className="header" align="center" width="20%">MONEY (DECIMAL)</StyledTableCell>
+                        <StyledTableCell className="header" align="center" width="20%">MONEYLINE</StyledTableCell>
                         <StyledTableCell className="header" align="center" width="20%">TOTAL</StyledTableCell>
                       </TableRow>
                     </TableHead>
@@ -442,11 +444,7 @@ const BettingPage = () => {
                       {groupedGames[date].map((game, index) => (
                         <React.Fragment key={game._id}>
                           {/* Away Team Row */}
-                          <StyledTableRow 
-                            component={RouterLink} 
-                            to={`/games/${game._id}`}
-                            sx={{ textDecoration: 'none' }}
-                          >
+                          <StyledTableRow>
                             <StyledTableCell>
                               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                 <TeamLogo bgcolor={getTeamColor(game.awayTeam)}>
@@ -458,7 +456,7 @@ const BettingPage = () => {
                               </Box>
                             </StyledTableCell>
                             <StyledTableCell align="center">
-                              <OddsValue>
+                              <OddsValue component={RouterLink} to={`/games/${game._id}`} sx={{ textDecoration: 'none' }}>
                                 <Typography variant="body2" color="white">
                                   {game.odds?.spread?.away > 0 ? '+' : ''}{game.odds?.spread?.away}
                                 </Typography>
@@ -468,14 +466,14 @@ const BettingPage = () => {
                               </OddsValue>
                             </StyledTableCell>
                             <StyledTableCell align="center">
-                              <OddsValue>
+                              <OddsValue component={RouterLink} to={`/games/${game._id}`} sx={{ textDecoration: 'none' }}>
                                 <Typography variant="body1" fontWeight="bold" color="white">
                                   {formatOdds(game.odds?.moneyline?.away)}
                                 </Typography>
                               </OddsValue>
                             </StyledTableCell>
                             <StyledTableCell align="center">
-                              <OddsValue>
+                              <OddsValue component={RouterLink} to={`/games/${game._id}`} sx={{ textDecoration: 'none' }}>
                                 <Typography variant="body2" color="white">
                                   O {game.odds?.total?.over}
                                 </Typography>
@@ -487,11 +485,7 @@ const BettingPage = () => {
                           </StyledTableRow>
 
                           {/* Home Team Row */}
-                          <StyledTableRow 
-                            component={RouterLink} 
-                            to={`/games/${game._id}`}
-                            className="divider"
-                          >
+                          <StyledTableRow className="divider">
                             <StyledTableCell>
                               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                 <TeamLogo bgcolor={getTeamColor(game.homeTeam)}>
@@ -503,7 +497,7 @@ const BettingPage = () => {
                               </Box>
                             </StyledTableCell>
                             <StyledTableCell align="center">
-                              <OddsValue>
+                              <OddsValue component={RouterLink} to={`/games/${game._id}`} sx={{ textDecoration: 'none' }}>
                                 <Typography variant="body2" color="white">
                                   {game.odds?.spread?.home > 0 ? '+' : ''}{game.odds?.spread?.home}
                                 </Typography>
@@ -513,14 +507,14 @@ const BettingPage = () => {
                               </OddsValue>
                             </StyledTableCell>
                             <StyledTableCell align="center">
-                              <OddsValue>
+                              <OddsValue component={RouterLink} to={`/games/${game._id}`} sx={{ textDecoration: 'none' }}>
                                 <Typography variant="body1" fontWeight="bold" color="white">
                                   {formatOdds(game.odds?.moneyline?.home)}
                                 </Typography>
                               </OddsValue>
                             </StyledTableCell>
                             <StyledTableCell align="center">
-                              <OddsValue>
+                              <OddsValue component={RouterLink} to={`/games/${game._id}`} sx={{ textDecoration: 'none' }}>
                                 <Typography variant="body2" color="white">
                                   U {game.odds?.total?.under}
                                 </Typography>
