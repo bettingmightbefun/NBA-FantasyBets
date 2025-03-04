@@ -16,9 +16,6 @@ import {
 import {
   TrendingUp as TrendingUpIcon,
   TrendingDown as TrendingDownIcon,
-  SportsCricket as BettingIcon,
-  History as HistoryIcon,
-  Leaderboard as LeaderboardIcon,
   Refresh as RefreshIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
