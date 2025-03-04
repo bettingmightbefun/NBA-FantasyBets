@@ -38,11 +38,17 @@ const BetInfo = styled(Box)(({ theme }) => ({
   display: 'flex',
   alignItems: 'flex-start',
   justifyContent: 'space-between',
-  marginBottom: theme.spacing(2),
+  marginBottom: theme.spacing(1),
 }));
 
 const TeamInfo = styled(Box)(({ theme }) => ({
   flex: 1,
+}));
+
+const BetTypeText = styled(Typography)(({ theme }) => ({
+  color: 'rgba(255, 255, 255, 0.7)',
+  fontSize: '0.875rem',
+  marginTop: '4px',
 }));
 
 const WagerInputContainer = styled(Box)(({ theme }) => ({
@@ -123,6 +129,16 @@ const Betslip = ({ bet, onRemove, onPlaceBet }) => {
     }
   };
 
+  // Format the line display
+  const getLineDisplay = () => {
+    if (bet.betType === 'Moneyline') {
+      return formatOdds(bet.odds);
+    } else if (bet.line) {
+      return (bet.line > 0 ? '+' : '') + bet.line;
+    }
+    return '';
+  };
+
   return (
     <BetslipContainer elevation={0}>
       <BetslipHeader>
@@ -137,28 +153,32 @@ const Betslip = ({ bet, onRemove, onPlaceBet }) => {
       </BetslipHeader>
       
       <BetslipContent>
-        <BetInfo>
-          <TeamInfo>
-            <Typography variant="body2" fontWeight="bold" gutterBottom>
-              {bet.team}
-            </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-              <LiveChip label="LIVE" size="small" />
-              <Typography variant="caption" color="rgba(255, 255, 255, 0.7)">
-                {bet.matchup}
-              </Typography>
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="body1" fontWeight="bold" gutterBottom>
+            {bet.team}
+          </Typography>
+          
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+            <Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                <LiveChip label="LIVE" size="small" />
+                <Typography variant="caption" color="rgba(255, 255, 255, 0.7)">
+                  {bet.matchup}
+                </Typography>
+              </Box>
+              <BetTypeText>
+                {bet.betType}
+              </BetTypeText>
             </Box>
-            <Typography variant="body2" color="rgba(255, 255, 255, 0.7)">
-              {bet.betType}
-            </Typography>
-          </TeamInfo>
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-            <Typography variant="body1" fontWeight="bold">
-              {bet.line && bet.line > 0 ? '+' : ''}{bet.line || formatOdds(bet.odds)}
-            </Typography>
-            <CashOutChip label="CASH OUT" size="small" />
+            
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+              <Typography variant="h6" fontWeight="bold" sx={{ mb: 0.5 }}>
+                {getLineDisplay()}
+              </Typography>
+              <CashOutChip label="CASH OUT" size="small" />
+            </Box>
           </Box>
-        </BetInfo>
+        </Box>
         
         <Divider sx={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', my: 2 }} />
         
@@ -171,7 +191,7 @@ const Betslip = ({ bet, onRemove, onPlaceBet }) => {
             value={wagerAmount}
             onChange={handleWagerChange}
             InputProps={{
-              startAdornment: <Typography sx={{ mr: 1 }}>$</Typography>,
+              startAdornment: <Typography sx={{ mr: 0.5 }}>$</Typography>,
             }}
           />
           
@@ -183,18 +203,29 @@ const Betslip = ({ bet, onRemove, onPlaceBet }) => {
             value={toWinAmount}
             onChange={handleToWinChange}
             InputProps={{
-              startAdornment: <Typography sx={{ mr: 1 }}>$</Typography>,
+              startAdornment: <Typography sx={{ mr: 0.5 }}>$</Typography>,
             }}
           />
         </WagerInputContainer>
         
-        <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
+        <Box sx={{ mt: 2 }}>
           <Button 
             variant="contained" 
             color="primary" 
             fullWidth
             disabled={!wagerAmount || isNaN(wagerAmount) || parseFloat(wagerAmount) <= 0}
             onClick={() => onPlaceBet(wagerAmount, toWinAmount)}
+            sx={{ 
+              py: 1.5, 
+              backgroundColor: '#333',
+              '&:hover': {
+                backgroundColor: '#444',
+              },
+              '&.Mui-disabled': {
+                backgroundColor: '#222',
+                color: 'rgba(255, 255, 255, 0.3)',
+              }
+            }}
           >
             Place Bet
           </Button>
@@ -203,10 +234,9 @@ const Betslip = ({ bet, onRemove, onPlaceBet }) => {
         <Box sx={{ mt: 2, display: 'flex', justifyContent: 'center' }}>
           <Button 
             variant="text" 
-            color="error" 
             onClick={onRemove}
-            startIcon={<DeleteIcon />}
-            sx={{ color: '#f44336' }}
+            startIcon={<DeleteIcon sx={{ color: '#f44336' }} />}
+            sx={{ color: '#f44336', textTransform: 'none' }}
           >
             Remove all selections
           </Button>

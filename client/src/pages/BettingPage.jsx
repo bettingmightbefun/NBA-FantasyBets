@@ -302,13 +302,26 @@ const BettingPage = () => {
     
     const matchup = `${game.awayTeam} @ ${game.homeTeam}`;
     
+    // Format the odds value for display
+    let formattedOdds = odds;
+    if (betType === 'Spread') {
+      formattedOdds = betType === 'Spread' && team === game.awayTeam ? 
+        game.odds?.spread?.awayOdds : game.odds?.spread?.homeOdds;
+    } else if (betType === 'Total') {
+      formattedOdds = team === 'Over' ? 
+        game.odds?.total?.overOdds : game.odds?.total?.underOdds;
+    } else if (betType === 'Moneyline') {
+      formattedOdds = team === game.awayTeam ? 
+        game.odds?.moneyline?.away : game.odds?.moneyline?.home;
+    }
+    
     setSelectedBet({
       gameId: game._id,
       team,
       matchup,
       betType,
       line,
-      odds,
+      odds: formattedOdds,
     });
   };
 
