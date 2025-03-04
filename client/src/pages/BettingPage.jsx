@@ -458,7 +458,7 @@ const BettingPage = () => {
                             </StyledTableCell>
                             <StyledTableCell align="center">
                               <OddsValue component={RouterLink} to={`/games/${game._id}`} sx={{ textDecoration: 'none' }}>
-                                <Typography variant="body2" color="white">
+                                <Typography variant="body2" color="white" fontWeight="bold">
                                   {game.odds?.spread?.away > 0 ? '+' : ''}{game.odds?.spread?.away}
                                 </Typography>
                                 <Typography variant="caption" color="rgba(255, 255, 255, 0.7)">
@@ -475,7 +475,7 @@ const BettingPage = () => {
                             </StyledTableCell>
                             <StyledTableCell align="center">
                               <OddsValue component={RouterLink} to={`/games/${game._id}`} sx={{ textDecoration: 'none' }}>
-                                <Typography variant="body2" color="white">
+                                <Typography variant="body2" color="white" fontWeight="bold">
                                   O {game.odds?.total?.over}
                                 </Typography>
                                 <Typography variant="caption" color="rgba(255, 255, 255, 0.7)">
@@ -499,7 +499,7 @@ const BettingPage = () => {
                             </StyledTableCell>
                             <StyledTableCell align="center">
                               <OddsValue component={RouterLink} to={`/games/${game._id}`} sx={{ textDecoration: 'none' }}>
-                                <Typography variant="body2" color="white">
+                                <Typography variant="body2" color="white" fontWeight="bold">
                                   {game.odds?.spread?.home > 0 ? '+' : ''}{game.odds?.spread?.home}
                                 </Typography>
                                 <Typography variant="caption" color="rgba(255, 255, 255, 0.7)">
@@ -516,7 +516,7 @@ const BettingPage = () => {
                             </StyledTableCell>
                             <StyledTableCell align="center">
                               <OddsValue component={RouterLink} to={`/games/${game._id}`} sx={{ textDecoration: 'none' }}>
-                                <Typography variant="body2" color="white">
+                                <Typography variant="body2" color="white" fontWeight="bold">
                                   U {game.odds?.total?.under}
                                 </Typography>
                                 <Typography variant="caption" color="rgba(255, 255, 255, 0.7)">
