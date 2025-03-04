@@ -22,11 +22,13 @@ import {
   TableRow,
   styled,
   useTheme,
+  Snackbar,
 } from '@mui/material';
 import { Search as SearchIcon, Refresh as RefreshIcon, ArrowForwardIos as ArrowIcon } from '@mui/icons-material';
 import { oddsAPI } from '../services/api';
 import { formatDate, formatTime, formatOdds } from '../utils/formatters';
 import { useAuth } from '../context/AuthContext';
+import Betslip from '../components/Betslip';
 
 // Styled components for the modern design
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
@@ -154,6 +156,9 @@ const BettingPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [tabValue, setTabValue] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [selectedBet, setSelectedBet] = useState(null);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
 
   // Refresh user data when component mounts
   useEffect(() => {
@@ -290,6 +295,63 @@ const BettingPage = () => {
     });
   };
 
+  // Handle bet selection
+  const handleBetSelect = (game, team, betType, line, odds) => {
+    // Prevent navigation when clicking on odds
+    event.preventDefault();
+    
+    const matchup = `${game.awayTeam} @ ${game.homeTeam}`;
+    
+    setSelectedBet({
+      gameId: game._id,
+      team,
+      matchup,
+      betType,
+      line,
+      odds,
+    });
+  };
+
+  // Handle bet removal
+  const handleRemoveBet = () => {
+    setSelectedBet(null);
+  };
+
+  // Handle placing a bet
+  const handlePlaceBet = async (wagerAmount, toWinAmount) => {
+    try {
+      // Here you would call your API to place the bet
+      console.log('Placing bet:', {
+        gameId: selectedBet.gameId,
+        team: selectedBet.team,
+        betType: selectedBet.betType,
+        line: selectedBet.line,
+        odds: selectedBet.odds,
+        wagerAmount,
+        potentialWin: toWinAmount
+      });
+      
+      // Show success message
+      setSnackbarMessage('Bet placed successfully!');
+      setSnackbarOpen(true);
+      
+      // Clear the betslip
+      setSelectedBet(null);
+      
+      // Refresh user data to update balance
+      refreshUserData();
+    } catch (err) {
+      console.error('Error placing bet:', err);
+      setSnackbarMessage('Failed to place bet. Please try again.');
+      setSnackbarOpen(true);
+    }
+  };
+
+  // Handle snackbar close
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
+  };
+
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
@@ -412,6 +474,17 @@ const BettingPage = () => {
             </Tabs>
           </Paper>
 
+          {/* Betslip */}
+          {selectedBet && (
+            <Box sx={{ mb: 3 }}>
+              <Betslip 
+                bet={selectedBet} 
+                onRemove={handleRemoveBet} 
+                onPlaceBet={handlePlaceBet}
+              />
+            </Box>
+          )}
+
           {filteredGames.length === 0 ? (
             <Box sx={{ textAlign: 'center', py: 5, color: 'white' }}>
               <Typography variant="h6" color="rgba(255, 255, 255, 0.7)" gutterBottom>
@@ -459,7 +532,19 @@ const BettingPage = () => {
                               </Box>
                             </StyledTableCell>
                             <StyledTableCell align="center">
-                              <OddsValue component={RouterLink} to={`/games/${game._id}`} sx={{ textDecoration: 'none' }}>
+                              <OddsValue 
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  handleBetSelect(
+                                    game, 
+                                    game.awayTeam, 
+                                    'Spread', 
+                                    game.odds?.spread?.away, 
+                                    game.odds?.spread?.awayOdds
+                                  );
+                                }}
+                                sx={{ textDecoration: 'none', cursor: 'pointer' }}
+                              >
                                 <Typography variant="body2" color="white" fontWeight="bold">
                                   {game.odds?.spread?.away > 0 ? '+' : ''}{game.odds?.spread?.away}
                                 </Typography>
@@ -469,14 +554,38 @@ const BettingPage = () => {
                               </OddsValue>
                             </StyledTableCell>
                             <StyledTableCell align="center">
-                              <OddsValue component={RouterLink} to={`/games/${game._id}`} sx={{ textDecoration: 'none' }}>
+                              <OddsValue 
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  handleBetSelect(
+                                    game, 
+                                    game.awayTeam, 
+                                    'Moneyline', 
+                                    null, 
+                                    game.odds?.moneyline?.away
+                                  );
+                                }}
+                                sx={{ textDecoration: 'none', cursor: 'pointer' }}
+                              >
                                 <Typography variant="body1" fontWeight="bold" color="white">
                                   {formatOdds(game.odds?.moneyline?.away)}
                                 </Typography>
                               </OddsValue>
                             </StyledTableCell>
                             <StyledTableCell align="center">
-                              <OddsValue component={RouterLink} to={`/games/${game._id}`} sx={{ textDecoration: 'none' }}>
+                              <OddsValue 
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  handleBetSelect(
+                                    game, 
+                                    'Over', 
+                                    'Total', 
+                                    game.odds?.total?.over, 
+                                    game.odds?.total?.overOdds
+                                  );
+                                }}
+                                sx={{ textDecoration: 'none', cursor: 'pointer' }}
+                              >
                                 <Typography variant="body2" color="white" fontWeight="bold">
                                   O {game.odds?.total?.over}
                                 </Typography>
@@ -500,7 +609,19 @@ const BettingPage = () => {
                               </Box>
                             </StyledTableCell>
                             <StyledTableCell align="center">
-                              <OddsValue component={RouterLink} to={`/games/${game._id}`} sx={{ textDecoration: 'none' }}>
+                              <OddsValue 
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  handleBetSelect(
+                                    game, 
+                                    game.homeTeam, 
+                                    'Spread', 
+                                    game.odds?.spread?.home, 
+                                    game.odds?.spread?.homeOdds
+                                  );
+                                }}
+                                sx={{ textDecoration: 'none', cursor: 'pointer' }}
+                              >
                                 <Typography variant="body2" color="white" fontWeight="bold">
                                   {game.odds?.spread?.home > 0 ? '+' : ''}{game.odds?.spread?.home}
                                 </Typography>
@@ -510,14 +631,38 @@ const BettingPage = () => {
                               </OddsValue>
                             </StyledTableCell>
                             <StyledTableCell align="center">
-                              <OddsValue component={RouterLink} to={`/games/${game._id}`} sx={{ textDecoration: 'none' }}>
+                              <OddsValue 
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  handleBetSelect(
+                                    game, 
+                                    game.homeTeam, 
+                                    'Moneyline', 
+                                    null, 
+                                    game.odds?.moneyline?.home
+                                  );
+                                }}
+                                sx={{ textDecoration: 'none', cursor: 'pointer' }}
+                              >
                                 <Typography variant="body1" fontWeight="bold" color="white">
                                   {formatOdds(game.odds?.moneyline?.home)}
                                 </Typography>
                               </OddsValue>
                             </StyledTableCell>
                             <StyledTableCell align="center">
-                              <OddsValue component={RouterLink} to={`/games/${game._id}`} sx={{ textDecoration: 'none' }}>
+                              <OddsValue 
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  handleBetSelect(
+                                    game, 
+                                    'Under', 
+                                    'Total', 
+                                    game.odds?.total?.under, 
+                                    game.odds?.total?.underOdds
+                                  );
+                                }}
+                                sx={{ textDecoration: 'none', cursor: 'pointer' }}
+                              >
                                 <Typography variant="body2" color="white" fontWeight="bold">
                                   U {game.odds?.total?.under}
                                 </Typography>
@@ -563,6 +708,15 @@ const BettingPage = () => {
           )}
         </Box>
       </Box>
+      
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+        message={snackbarMessage}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      />
     </Box>
   );
 };
